@@ -13,4 +13,8 @@
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="NICK2.0-core.Tests\**\*.cs" />
+  </ItemGroup>
+
 </Project>
