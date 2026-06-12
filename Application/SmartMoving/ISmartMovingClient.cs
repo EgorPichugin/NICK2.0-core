@@ -1,4 +1,4 @@
-namespace NICK2._0_core.Infrastructure.SmartMoving;
+namespace NICK2._0_core.Application.SmartMoving;
 
 /// <summary>
 /// Provides access to SmartMoving API resources.

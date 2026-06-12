@@ -1,3 +1,8 @@
+using System.Net.Http.Json;
+using NICK2._0_core.Application.SmartMoving;
+using NICK2._0_core.Infrastructure.SmartMoving.Mappers;
+using NICK2._0_core.Infrastructure.SmartMoving.Responses;
+
 namespace NICK2._0_core.Infrastructure.SmartMoving;
 
 /// <inheritdoc />
@@ -18,8 +23,16 @@ public sealed class SmartMovingClient(
             return null;
         }
 
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-        return new SmartMovingOpportunity(opportunityId);
+            throw new SmartMovingApiException(response.StatusCode, responseBody);
+        }
+
+        var opportunityResponse = await response.Content.ReadFromJsonAsync<SmartMovingOpportunityApiResponse>(
+            cancellationToken);
+
+        return opportunityResponse?.ToSmartMovingOpportunity();
     }
 }

@@ -1,3 +1,4 @@
+using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks.Commands;
 using NICK2._0_core.Application.Webhooks.Services;
 
@@ -10,17 +11,24 @@ public sealed class WebHookProcessingService(
     IDataCollectorService dataCollectorService) : IWebHookProcessingService
 {
     /// <inheritdoc />
-    public async Task ProcessOpportunityStatusChanged(
+    public async Task<SmartMovingOpportunity?> ProcessOpportunityStatusChanged(
         ProcessOpportunityStatusChangedCommand command,
         CancellationToken cancellationToken)
     {
+        if (command.EventType != ProcessOpportunityStatusChangedCommand.ExpectedEventType)
+        {
+            throw new InvalidWebhookEventTypeException(
+                command.EventType,
+                ProcessOpportunityStatusChangedCommand.ExpectedEventType);
+        }
+
         var isValidStatus = await statusValidationService.IsValid(
             command.OpportunityStatus,
             cancellationToken);
 
         if (!isValidStatus)
         {
-            return;
+            return null;
         }
 
         var shouldProcess = await processingStateService.TryStartProcessing(
@@ -29,13 +37,20 @@ public sealed class WebHookProcessingService(
 
         if (!shouldProcess)
         {
-            return;
+            return null;
         }
 
-        await dataCollectorService.CollectOpportunityData(
+        var opportunity = await dataCollectorService.CollectOpportunityData(
             command.OpportunityId,
             cancellationToken);
 
+        if (opportunity is null)
+        {
+            return null;
+        }
+
         await processingStateService.MarkProcessed(command, cancellationToken);
+
+        return opportunity;
     }
 }

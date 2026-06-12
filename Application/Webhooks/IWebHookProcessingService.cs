@@ -1,4 +1,5 @@
 using NICK2._0_core.Application.Webhooks.Commands;
+using NICK2._0_core.Application.SmartMoving;
 
 namespace NICK2._0_core.Application.Webhooks;
 
@@ -12,7 +13,7 @@ public interface IWebHookProcessingService
     /// </summary>
     /// <param name="command">The command that contains the webhook event data.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
-    Task ProcessOpportunityStatusChanged(
+    Task<SmartMovingOpportunity?> ProcessOpportunityStatusChanged(
         ProcessOpportunityStatusChangedCommand command,
         CancellationToken cancellationToken);
 }

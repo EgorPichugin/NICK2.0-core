@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Infrastructure.SmartMoving;
 
 namespace NICK2._0_core.Infrastructure;

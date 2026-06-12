@@ -1,3 +1,5 @@
+using NICK2._0_core.Application.SmartMoving;
+
 namespace NICK2._0_core.Application.Webhooks.Services;
 
 /// <summary>
@@ -10,5 +12,5 @@ public interface IDataCollectorService
     /// </summary>
     /// <param name="opportunityId">The SmartMoving opportunity identifier.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
-    Task CollectOpportunityData(Guid opportunityId, CancellationToken cancellationToken);
+    Task<SmartMovingOpportunity?> CollectOpportunityData(Guid opportunityId, CancellationToken cancellationToken);
 }

@@ -1,4 +1,4 @@
-using NICK2._0_core.Infrastructure.SmartMoving;
+using NICK2._0_core.Application.SmartMoving;
 
 namespace NICK2._0_core.Application.Webhooks.Services;
 
@@ -7,8 +7,8 @@ public sealed class DataCollectorService(
     ISmartMovingClient smartMovingClient) : IDataCollectorService
 {
     /// <inheritdoc />
-    public async Task CollectOpportunityData(Guid opportunityId, CancellationToken cancellationToken)
+    public async Task<SmartMovingOpportunity?> CollectOpportunityData(Guid opportunityId, CancellationToken cancellationToken)
     {
-        await smartMovingClient.GetOpportunity(opportunityId, cancellationToken);
+        return await smartMovingClient.GetOpportunity(opportunityId, cancellationToken);
     }
 }
