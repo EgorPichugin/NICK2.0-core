@@ -9,6 +9,7 @@ public static class DependencyInjection
     {
         services.AddSingleton<IProcessingStateService, ProcessingStateService>();
         services.AddScoped<IStatusValidationService, StatusValidationService>();
+        services.AddScoped<IOpportunityStatusSnapshotService, OpportunityStatusSnapshotService>();
         services.AddScoped<IDataCollectorService, DataCollectorService>();
         services.AddScoped<IWebHookProcessingService, WebHookProcessingService>();
 

@@ -2,6 +2,7 @@ using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks;
 using NICK2._0_core.Application.Webhooks.Commands;
 using NICK2._0_core.Application.Webhooks.Services;
+using NICK2._0_core.Domain;
 
 namespace NICK2._0_core.Tests.Application.Webhooks;
 
@@ -50,17 +51,36 @@ public sealed class WebHookProcessingServiceTests
     }
 
     [Fact]
+    public async Task ProcessOpportunityStatusChanged_DoesNotCollectData_WhenStatusTransitionIsNotTarget()
+    {
+        var dataCollector = new FakeDataCollectorService();
+        var service = CreateService(
+            opportunityStatusSnapshotService: new FakeOpportunityStatusSnapshotService(false),
+            dataCollectorService: dataCollector);
+
+        var result = await service.ProcessOpportunityStatusChanged(
+            CreateCommand(opportunityStatus: (int)OpportunityStatus.Booked),
+            CancellationToken.None);
+
+        Assert.Null(result);
+        Assert.Equal(0, dataCollector.CollectCallCount);
+    }
+
+    [Fact]
     public async Task ProcessOpportunityStatusChanged_ReturnsOpportunityAndMarksProcessed_WhenEventIsValid()
     {
         var expectedOpportunity = new SmartMovingOpportunity(Guid.NewGuid(), 90690, 3);
         var dataCollector = new FakeDataCollectorService(expectedOpportunity);
         var processingState = new FakeProcessingStateService(true);
         var service = CreateService(
+            opportunityStatusSnapshotService: new FakeOpportunityStatusSnapshotService(true),
             processingStateService: processingState,
             dataCollectorService: dataCollector);
 
         var result = await service.ProcessOpportunityStatusChanged(
-            CreateCommand(opportunityId: expectedOpportunity.Id),
+            CreateCommand(
+                opportunityId: expectedOpportunity.Id,
+                opportunityStatus: (int)OpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.Equal(expectedOpportunity, result);
@@ -70,11 +90,13 @@ public sealed class WebHookProcessingServiceTests
 
     private static WebHookProcessingService CreateService(
         IStatusValidationService? statusValidationService = null,
+        IOpportunityStatusSnapshotService? opportunityStatusSnapshotService = null,
         IProcessingStateService? processingStateService = null,
         IDataCollectorService? dataCollectorService = null)
     {
         return new WebHookProcessingService(
             statusValidationService ?? new FakeStatusValidationService(true),
+            opportunityStatusSnapshotService ?? new FakeOpportunityStatusSnapshotService(true),
             processingStateService ?? new FakeProcessingStateService(true),
             dataCollectorService ?? new FakeDataCollectorService());
     }
@@ -116,6 +138,17 @@ public sealed class WebHookProcessingServiceTests
             MarkProcessedCallCount++;
 
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeOpportunityStatusSnapshotService(bool shouldProcess)
+        : IOpportunityStatusSnapshotService
+    {
+        public Task<bool> UpdateAndCheckShouldProcess(
+            ProcessOpportunityStatusChangedCommand command,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(shouldProcess);
         }
     }
 

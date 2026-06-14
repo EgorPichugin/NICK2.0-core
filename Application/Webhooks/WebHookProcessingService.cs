@@ -7,6 +7,7 @@ namespace NICK2._0_core.Application.Webhooks;
 /// <inheritdoc />
 public sealed class WebHookProcessingService(
     IStatusValidationService statusValidationService,
+    IOpportunityStatusSnapshotService opportunityStatusSnapshotService,
     IProcessingStateService processingStateService,
     IDataCollectorService dataCollectorService) : IWebHookProcessingService
 {
@@ -27,6 +28,15 @@ public sealed class WebHookProcessingService(
             cancellationToken);
 
         if (!isValidStatus)
+        {
+            return null;
+        }
+
+        var hasTargetStatusTransition = await opportunityStatusSnapshotService.UpdateAndCheckShouldProcess(
+            command,
+            cancellationToken);
+
+        if (!hasTargetStatusTransition)
         {
             return null;
         }
