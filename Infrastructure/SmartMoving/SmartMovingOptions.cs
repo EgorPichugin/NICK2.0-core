@@ -23,5 +23,5 @@ public sealed class SmartMovingOptions
     /// <summary>
     /// Token used to authorize incoming SmartMoving webhook requests.
     /// </summary>
-    // public string WebhookToken { get; init; } = string.Empty;
+    public string WebhookToken { get; init; } = string.Empty;
 }

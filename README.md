@@ -35,3 +35,11 @@ SmartMoving__BaseUrl
 SmartMoving__ApiKey
 SmartMoving__WebhookToken
 ```
+
+SmartMoving webhook custom header:
+
+```text
+X-SmartMoving-Webhook-Token: same-value-as-SmartMoving__WebhookToken
+```
+
+`SmartMoving_WebhookToken` is also supported as a fallback variable name.

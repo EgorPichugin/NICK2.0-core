@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks;
 using NICK2._0_core.Application.Webhooks.Commands;
+using NICK2._0_core.Infrastructure.SmartMoving;
 
 namespace NICK2._0_core.Controllers;
 
@@ -9,8 +11,12 @@ namespace NICK2._0_core.Controllers;
 [Route("api/smartmoving/webhook")]
 public sealed class SmartMovingWebhookController(
     IWebHookProcessingService webHookProcessingService,
+    IOptions<SmartMovingOptions> smartMovingOptions,
+    IConfiguration configuration,
     ILogger<SmartMovingWebhookController> logger) : ControllerBase
 {
+    private const string WebhookTokenHeaderName = "X-SmartMoving-Webhook-Token";
+
     private static readonly Guid TestOpportunityId =
         Guid.Parse("3e48d43e-18a5-4d10-b7f3-b4390145fe28");
 
@@ -19,6 +25,13 @@ public sealed class SmartMovingWebhookController(
         [FromBody] ProcessOpportunityStatusChangedCommand command,
         CancellationToken cancellationToken)
     {
+        if (!IsAuthorizedWebhookRequest())
+        {
+            logger.LogWarning("Rejected SmartMoving webhook request with invalid token.");
+
+            return Unauthorized();
+        }
+
         // TODO: Remove after SmartMoving webhook testing is complete.
         if (command.OpportunityId != TestOpportunityId)
         {
@@ -54,5 +67,23 @@ public sealed class SmartMovingWebhookController(
         }
 
         return Ok(new { received = true });
+    }
+
+    private bool IsAuthorizedWebhookRequest()
+    {
+        var expectedToken = smartMovingOptions.Value.WebhookToken;
+
+        if (string.IsNullOrWhiteSpace(expectedToken))
+        {
+            expectedToken = configuration["SmartMoving_WebhookToken"] ?? string.Empty;
+        }
+
+        if (string.IsNullOrWhiteSpace(expectedToken))
+        {
+            return false;
+        }
+
+        return Request.Headers.TryGetValue(WebhookTokenHeaderName, out var actualToken)
+            && actualToken == expectedToken;
     }
 }
