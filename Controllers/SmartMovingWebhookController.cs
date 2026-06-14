@@ -11,11 +11,24 @@ public sealed class SmartMovingWebhookController(
     IWebHookProcessingService webHookProcessingService,
     ILogger<SmartMovingWebhookController> logger) : ControllerBase
 {
+    private static readonly Guid TestOpportunityId =
+        Guid.Parse("3e48d43e-18a5-4d10-b7f3-b4390145fe28");
+
     [HttpPost("opportunity-status-changed")]
     public async Task<IActionResult> OpportunityStatusChanged(
         [FromBody] ProcessOpportunityStatusChangedCommand command,
         CancellationToken cancellationToken)
     {
+        // TODO: Remove after SmartMoving webhook testing is complete.
+        if (command.OpportunityId != TestOpportunityId)
+        {
+            logger.LogInformation(
+                "Skipping SmartMoving webhook for non-test opportunity {OpportunityId}.",
+                command.OpportunityId);
+
+            return Ok(new { received = true });
+        }
+
         try
         {
             await webHookProcessingService.ProcessOpportunityStatusChanged(command, cancellationToken);

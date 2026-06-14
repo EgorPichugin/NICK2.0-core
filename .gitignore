@@ -39,6 +39,9 @@ ScaffoldingReadMe.txt
 # dotenv environment variables file
 .env
 
+# Local HTTP scratch requests
+NICK2.0-core.http
+
 # Others
 ~$*
 *~
