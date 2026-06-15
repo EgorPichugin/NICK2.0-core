@@ -26,6 +26,42 @@ public sealed class OpportunityStatusSnapshotServiceTests
     }
 
     [Fact]
+    public async Task UpdateAndCheckShouldProcess_ReturnsTrue_ForLostToBooked()
+    {
+        var repository = new FakeOpportunityStatusSnapshotRepository();
+        var service = new OpportunityStatusSnapshotService(repository);
+        var opportunityId = Guid.NewGuid();
+
+        await service.UpdateAndCheckShouldProcess(
+            CreateCommand(opportunityId, OpportunityStatus.Lost),
+            CancellationToken.None);
+
+        var shouldProcess = await service.UpdateAndCheckShouldProcess(
+            CreateCommand(opportunityId, OpportunityStatus.Booked),
+            CancellationToken.None);
+
+        Assert.True(shouldProcess);
+    }
+
+    [Fact]
+    public async Task UpdateAndCheckShouldProcess_ReturnsFalse_ForBookedToBooked()
+    {
+        var repository = new FakeOpportunityStatusSnapshotRepository();
+        var service = new OpportunityStatusSnapshotService(repository);
+        var opportunityId = Guid.NewGuid();
+
+        await service.UpdateAndCheckShouldProcess(
+            CreateCommand(opportunityId, OpportunityStatus.Booked),
+            CancellationToken.None);
+
+        var shouldProcess = await service.UpdateAndCheckShouldProcess(
+            CreateCommand(opportunityId, OpportunityStatus.Booked),
+            CancellationToken.None);
+
+        Assert.False(shouldProcess);
+    }
+
+    [Fact]
     public async Task UpdateAndCheckShouldProcess_ReturnsFalse_WhenCurrentStatusIsNotBooked()
     {
         var service = new OpportunityStatusSnapshotService(

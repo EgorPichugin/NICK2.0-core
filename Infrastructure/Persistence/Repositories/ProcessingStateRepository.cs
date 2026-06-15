@@ -4,7 +4,9 @@ using NICK2._0_core.Domain;
 
 namespace NICK2._0_core.Infrastructure.Persistence.Repositories;
 
-public sealed class ProcessingStateRepository(AppDbContext dbContext)
+public sealed class ProcessingStateRepository(
+    AppDbContext dbContext,
+    ILogger<ProcessingStateRepository> logger)
     : IProcessingStateRepository
 {
     public async Task<bool> TryAddProcessing(
@@ -19,7 +21,24 @@ public sealed class ProcessingStateRepository(AppDbContext dbContext)
             ON CONFLICT ("EventType", "OpportunityId", "OpportunityStatus") DO NOTHING
             """, cancellationToken);
 
-        return rowsInserted > 0;
+        if (rowsInserted == 0)
+        {
+            logger.LogDebug(
+                "Processing state already exists for webhook {EventType}, opportunity {OpportunityId}, status {OpportunityStatus}.",
+                eventType,
+                opportunityId,
+                opportunityStatus);
+
+            return false;
+        }
+
+        logger.LogDebug(
+            "Created processing state for webhook {EventType}, opportunity {OpportunityId}, status {OpportunityStatus}.",
+            eventType,
+            opportunityId,
+            opportunityStatus);
+
+        return true;
     }
 
     public async Task MarkProcessed(
@@ -37,6 +56,12 @@ public sealed class ProcessingStateRepository(AppDbContext dbContext)
 
         if (processingState is null)
         {
+            logger.LogWarning(
+                "Could not mark processing state as processed because it was not found. EventType: {EventType}. OpportunityId: {OpportunityId}. OpportunityStatus: {OpportunityStatus}.",
+                eventType,
+                opportunityId,
+                opportunityStatus);
+
             return;
         }
 
@@ -44,5 +69,11 @@ public sealed class ProcessingStateRepository(AppDbContext dbContext)
         processingState.ProcessedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogDebug(
+            "Marked processing state as processed for webhook {EventType}, opportunity {OpportunityId}, status {OpportunityStatus}.",
+            eventType,
+            opportunityId,
+            opportunityStatus);
     }
 }

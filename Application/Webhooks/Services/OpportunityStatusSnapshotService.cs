@@ -5,7 +5,8 @@ using NICK2._0_core.Domain;
 namespace NICK2._0_core.Application.Webhooks.Services;
 
 public sealed class OpportunityStatusSnapshotService(
-    IOpportunityStatusSnapshotRepository repository) : IOpportunityStatusSnapshotService
+    IOpportunityStatusSnapshotRepository repository,
+    ILogger<OpportunityStatusSnapshotService>? logger = null) : IOpportunityStatusSnapshotService
 {
     public async Task<bool> UpdateAndCheckShouldProcess(
         ProcessOpportunityStatusChangedCommand command,
@@ -17,7 +18,16 @@ public sealed class OpportunityStatusSnapshotService(
             currentStatus,
             cancellationToken);
 
-        return currentStatus == OpportunityStatus.Booked
+        var shouldProcess = currentStatus == OpportunityStatus.Booked
             && previousStatus is OpportunityStatus.Opportunity or OpportunityStatus.Lost;
+
+        logger?.LogInformation(
+            "Updated opportunity status snapshot for {OpportunityId}. PreviousStatus: {PreviousStatus}. CurrentStatus: {CurrentStatus}. ShouldProcess: {ShouldProcess}.",
+            command.OpportunityId,
+            previousStatus,
+            currentStatus,
+            shouldProcess);
+
+        return shouldProcess;
     }
 }

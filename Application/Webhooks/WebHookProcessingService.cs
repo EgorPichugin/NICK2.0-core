@@ -9,15 +9,28 @@ public sealed class WebHookProcessingService(
     IStatusValidationService statusValidationService,
     IOpportunityStatusSnapshotService opportunityStatusSnapshotService,
     IProcessingStateService processingStateService,
-    IDataCollectorService dataCollectorService) : IWebHookProcessingService
+    IDataCollectorService dataCollectorService,
+    ILogger<WebHookProcessingService>? logger = null) : IWebHookProcessingService
 {
     /// <inheritdoc />
     public async Task<SmartMovingOpportunity?> ProcessOpportunityStatusChanged(
         ProcessOpportunityStatusChangedCommand command,
         CancellationToken cancellationToken)
     {
+        logger?.LogInformation(
+            "Processing SmartMoving webhook {EventType} for opportunity {OpportunityId} with status {OpportunityStatus}.",
+            command.EventType,
+            command.OpportunityId,
+            command.OpportunityStatus);
+
         if (command.EventType != ProcessOpportunityStatusChangedCommand.ExpectedEventType)
         {
+            logger?.LogWarning(
+                "Rejected SmartMoving webhook for opportunity {OpportunityId} because event type {ActualEventType} does not match expected event type {ExpectedEventType}.",
+                command.OpportunityId,
+                command.EventType,
+                ProcessOpportunityStatusChangedCommand.ExpectedEventType);
+
             throw new InvalidWebhookEventTypeException(
                 command.EventType,
                 ProcessOpportunityStatusChangedCommand.ExpectedEventType);
@@ -29,6 +42,11 @@ public sealed class WebHookProcessingService(
 
         if (!isValidStatus)
         {
+            logger?.LogInformation(
+                "Skipping SmartMoving webhook for opportunity {OpportunityId} because status {OpportunityStatus} is not supported.",
+                command.OpportunityId,
+                command.OpportunityStatus);
+
             return null;
         }
 
@@ -38,6 +56,11 @@ public sealed class WebHookProcessingService(
 
         if (!hasTargetStatusTransition)
         {
+            logger?.LogInformation(
+                "Skipping SmartMoving webhook for opportunity {OpportunityId} because status {OpportunityStatus} is not a target transition.",
+                command.OpportunityId,
+                command.OpportunityStatus);
+
             return null;
         }
 
@@ -47,6 +70,12 @@ public sealed class WebHookProcessingService(
 
         if (!shouldProcess)
         {
+            logger?.LogInformation(
+                "Skipping duplicate SmartMoving webhook {EventType} for opportunity {OpportunityId} with status {OpportunityStatus}.",
+                command.EventType,
+                command.OpportunityId,
+                command.OpportunityStatus);
+
             return null;
         }
 
@@ -56,10 +85,21 @@ public sealed class WebHookProcessingService(
 
         if (opportunity is null)
         {
+            logger?.LogWarning(
+                "SmartMoving opportunity {OpportunityId} was not found while processing webhook {EventType}.",
+                command.OpportunityId,
+                command.EventType);
+
             return null;
         }
 
         await processingStateService.MarkProcessed(command, cancellationToken);
+
+        logger?.LogInformation(
+            "Processed SmartMoving webhook {EventType} for opportunity {OpportunityId} with status {OpportunityStatus}.",
+            command.EventType,
+            command.OpportunityId,
+            command.OpportunityStatus);
 
         return opportunity;
     }
