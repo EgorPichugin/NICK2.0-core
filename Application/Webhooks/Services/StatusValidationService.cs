@@ -3,11 +3,21 @@ using NICK2._0_core.Domain;
 namespace NICK2._0_core.Application.Webhooks.Services;
 
 /// <inheritdoc />
-public sealed class StatusValidationService : IStatusValidationService
+public sealed class StatusValidationService(
+    ILogger<StatusValidationService>? logger = null) : IStatusValidationService
 {
     /// <inheritdoc />
     public Task<bool> IsValid(int opportunityStatus, CancellationToken cancellationToken)
     {
-        return Task.FromResult(Enum.IsDefined(typeof(OpportunityStatus), opportunityStatus));
+        var isValid = Enum.IsDefined(typeof(OpportunityStatus), opportunityStatus);
+
+        if (!isValid)
+        {
+            logger?.LogInformation(
+                "SmartMoving opportunity status {OpportunityStatus} is not mapped to a supported domain status.",
+                opportunityStatus);
+        }
+
+        return Task.FromResult(isValid);
     }
 }

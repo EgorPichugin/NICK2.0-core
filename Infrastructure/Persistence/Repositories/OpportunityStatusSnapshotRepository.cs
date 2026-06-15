@@ -4,7 +4,9 @@ using NICK2._0_core.Domain;
 
 namespace NICK2._0_core.Infrastructure.Persistence.Repositories;
 
-public sealed class OpportunityStatusSnapshotRepository(AppDbContext dbContext)
+public sealed class OpportunityStatusSnapshotRepository(
+    AppDbContext dbContext,
+    ILogger<OpportunityStatusSnapshotRepository> logger)
     : IOpportunityStatusSnapshotRepository
 {
     public async Task<OpportunityStatus?> UpsertStatus(
@@ -21,6 +23,11 @@ public sealed class OpportunityStatusSnapshotRepository(AppDbContext dbContext)
 
         if (snapshot is null)
         {
+            logger.LogDebug(
+                "Creating opportunity status snapshot for {OpportunityId} with status {CurrentStatus}.",
+                opportunityId,
+                currentStatus);
+
             dbContext.OpportunityStatusSnapshots.Add(new OpportunityStatusSnapshot
             {
                 Id = opportunityId,
@@ -31,6 +38,12 @@ public sealed class OpportunityStatusSnapshotRepository(AppDbContext dbContext)
         }
         else
         {
+            logger.LogDebug(
+                "Updating opportunity status snapshot for {OpportunityId} from {PreviousStatus} to {CurrentStatus}.",
+                opportunityId,
+                snapshot.CurrentStatus,
+                currentStatus);
+
             snapshot.PreviousStatus = snapshot.CurrentStatus;
             snapshot.CurrentStatus = currentStatus;
             snapshot.UpdatedAt = DateTimeOffset.UtcNow;

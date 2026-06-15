@@ -38,8 +38,9 @@ public sealed class WebHookProcessingServiceTests
     public async Task ProcessOpportunityStatusChanged_DoesNotCollectData_WhenEventAlreadyStarted()
     {
         var dataCollector = new FakeDataCollectorService();
+        var processingState = new FakeProcessingStateService(false);
         var service = CreateService(
-            processingStateService: new FakeProcessingStateService(false),
+            processingStateService: processingState,
             dataCollectorService: dataCollector);
 
         var result = await service.ProcessOpportunityStatusChanged(
@@ -47,15 +48,19 @@ public sealed class WebHookProcessingServiceTests
             CancellationToken.None);
 
         Assert.Null(result);
+        Assert.Equal(1, processingState.TryStartProcessingCallCount);
         Assert.Equal(0, dataCollector.CollectCallCount);
+        Assert.Equal(0, processingState.MarkProcessedCallCount);
     }
 
     [Fact]
     public async Task ProcessOpportunityStatusChanged_DoesNotCollectData_WhenStatusTransitionIsNotTarget()
     {
         var dataCollector = new FakeDataCollectorService();
+        var processingState = new FakeProcessingStateService(true);
         var service = CreateService(
             opportunityStatusSnapshotService: new FakeOpportunityStatusSnapshotService(false),
+            processingStateService: processingState,
             dataCollectorService: dataCollector);
 
         var result = await service.ProcessOpportunityStatusChanged(
@@ -63,7 +68,27 @@ public sealed class WebHookProcessingServiceTests
             CancellationToken.None);
 
         Assert.Null(result);
+        Assert.Equal(0, processingState.TryStartProcessingCallCount);
         Assert.Equal(0, dataCollector.CollectCallCount);
+        Assert.Equal(0, processingState.MarkProcessedCallCount);
+    }
+
+    [Fact]
+    public async Task ProcessOpportunityStatusChanged_DoesNotMarkProcessed_WhenOpportunityIsNotFound()
+    {
+        var processingState = new FakeProcessingStateService(true);
+        var service = CreateService(
+            opportunityStatusSnapshotService: new FakeOpportunityStatusSnapshotService(true),
+            processingStateService: processingState,
+            dataCollectorService: new FakeDataCollectorService());
+
+        var result = await service.ProcessOpportunityStatusChanged(
+            CreateCommand(opportunityStatus: (int)OpportunityStatus.Booked),
+            CancellationToken.None);
+
+        Assert.Null(result);
+        Assert.Equal(1, processingState.TryStartProcessingCallCount);
+        Assert.Equal(0, processingState.MarkProcessedCallCount);
     }
 
     [Fact]
@@ -122,12 +147,16 @@ public sealed class WebHookProcessingServiceTests
 
     private sealed class FakeProcessingStateService(bool shouldStartProcessing) : IProcessingStateService
     {
+        public int TryStartProcessingCallCount { get; private set; }
+
         public int MarkProcessedCallCount { get; private set; }
 
         public Task<bool> TryStartProcessing(
             ProcessOpportunityStatusChangedCommand command,
             CancellationToken cancellationToken)
         {
+            TryStartProcessingCallCount++;
+
             return Task.FromResult(shouldStartProcessing);
         }
 
