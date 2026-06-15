@@ -7,7 +7,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        services.AddSingleton<IProcessingStateService, ProcessingStateService>();
+        services.AddScoped<IProcessingStateService, ProcessingStateService>();
         services.AddScoped<IStatusValidationService, StatusValidationService>();
         services.AddScoped<IOpportunityStatusSnapshotService, OpportunityStatusSnapshotService>();
         services.AddScoped<IDataCollectorService, DataCollectorService>();

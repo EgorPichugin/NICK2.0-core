@@ -41,6 +41,39 @@ namespace NICK2._0_core.Infrastructure.Persistence.Migrations
 
                     b.ToTable("opportunity_status_snapshots", (string)null);
                 });
+
+            modelBuilder.Entity("NICK2._0_core.Domain.ProcessingStateRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OpportunityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("OpportunityStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventType", "OpportunityId", "OpportunityStatus")
+                        .IsUnique();
+
+                    b.ToTable("processing_states", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }
