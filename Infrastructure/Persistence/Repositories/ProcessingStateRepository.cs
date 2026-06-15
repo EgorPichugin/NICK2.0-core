@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using NICK2._0_core.Application.Webhooks.Repositories;
 using NICK2._0_core.Domain;
 
@@ -14,29 +13,13 @@ public sealed class ProcessingStateRepository(AppDbContext dbContext)
         OpportunityStatus opportunityStatus,
         CancellationToken cancellationToken)
     {
-        dbContext.ProcessingStates.Add(new ProcessingStateRecord
-        {
-            Id = Guid.NewGuid(),
-            EventType = eventType,
-            OpportunityId = opportunityId,
-            OpportunityStatus = opportunityStatus,
-            State = ProcessingState.Processing,
-            CreatedAt = DateTimeOffset.UtcNow
-        });
+        var rowsInserted = await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO processing_states ("Id", "EventType", "OpportunityId", "OpportunityStatus", "State", "CreatedAt")
+            VALUES ({Guid.NewGuid()}, {eventType}, {opportunityId}, {(int)opportunityStatus}, {(int)ProcessingState.Processing}, {DateTimeOffset.UtcNow})
+            ON CONFLICT ("EventType", "OpportunityId", "OpportunityStatus") DO NOTHING
+            """, cancellationToken);
 
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return true;
-        }
-        catch (DbUpdateException exception)
-            when (exception.InnerException is PostgresException
-            {
-                SqlState: PostgresErrorCodes.UniqueViolation
-            })
-        {
-            return false;
-        }
+        return rowsInserted > 0;
     }
 
     public async Task MarkProcessed(

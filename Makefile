@@ -1,4 +1,4 @@
-DOTNET ?= $(shell if command -v dotnet >/dev/null 2>&1; then printf dotnet; elif command -v dotnet.exe >/dev/null 2>&1; then printf dotnet.exe; else printf dotnet; fi)
+DOTNET ?= $(shell if command -v dotnet >/dev/null 2>&1; then printf dotnet; elif command -v cmd.exe >/dev/null 2>&1; then printf 'cmd.exe /C dotnet'; else printf dotnet; fi)
 
 .PHONY: local-run db-up db-down db-reset db-logs build test
 
