@@ -24,6 +24,7 @@ public static class DependencyInjection
             options.UseNpgsql(BuildPostgreSqlConnectionString(configuration)));
         services.AddHostedService<DatabaseInitializer>();
         services.AddScoped<IOpportunityStatusSnapshotRepository, OpportunityStatusSnapshotRepository>();
+        services.AddScoped<IProcessingStateRepository, ProcessingStateRepository>();
 
         services.AddHttpClient<ISmartMovingClient, SmartMovingClient>((serviceProvider, httpClient) =>
         {
