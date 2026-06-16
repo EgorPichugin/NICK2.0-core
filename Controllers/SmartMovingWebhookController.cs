@@ -18,7 +18,7 @@ public sealed class SmartMovingWebhookController(
     private const string WebhookTokenHeaderName = "X-SmartMoving-Webhook-Token";
 
     private static readonly Guid TestOpportunityId =
-        Guid.Parse("3e48d43e-18a5-4d10-b7f3-b4390145fe28");
+        Guid.Parse("578beceb-0553-4ef3-85d6-b40101895952");
 
     [HttpPost("opportunity-status-changed")]
     public async Task<IActionResult> OpportunityStatusChanged(

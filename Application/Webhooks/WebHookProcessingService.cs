@@ -1,3 +1,4 @@
+using System.Text.Json;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks.Commands;
 using NICK2._0_core.Application.Webhooks.Services;
@@ -94,13 +95,41 @@ public sealed class WebHookProcessingService(
         }
 
         await processingStateService.MarkProcessed(command, cancellationToken);
+        var opportunitySnapshotPath = await SaveOpportunitySnapshot(opportunity, cancellationToken);
 
         logger?.LogInformation(
             "Processed SmartMoving webhook {EventType} for opportunity {OpportunityId} with status {OpportunityStatus}.",
             command.EventType,
             command.OpportunityId,
             command.OpportunityStatus);
+        logger?.LogInformation(
+            "Saved SmartMoving opportunity snapshot to {OutputPath}.",
+            opportunitySnapshotPath);
 
         return opportunity;
+    }
+
+    private static async Task<string> SaveOpportunitySnapshot(
+        SmartMovingOpportunity opportunity,
+        CancellationToken cancellationToken)
+    {
+        var outputDirectory = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDirectory);
+
+        var outputPath = Path.Combine(
+            outputDirectory,
+            $"smartmoving-opportunity-{opportunity.Id}.json");
+
+        await using var stream = File.Create(outputPath);
+        await JsonSerializer.SerializeAsync(
+            stream,
+            opportunity,
+            new JsonSerializerOptions
+            {
+                WriteIndented = true
+            },
+            cancellationToken);
+
+        return outputPath;
     }
 }

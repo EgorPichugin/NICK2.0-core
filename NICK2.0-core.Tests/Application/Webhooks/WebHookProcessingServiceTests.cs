@@ -94,7 +94,7 @@ public sealed class WebHookProcessingServiceTests
     [Fact]
     public async Task ProcessOpportunityStatusChanged_ReturnsOpportunityAndMarksProcessed_WhenEventIsValid()
     {
-        var expectedOpportunity = new SmartMovingOpportunity(Guid.NewGuid(), 90690, 3);
+        var expectedOpportunity = new SmartMovingOpportunity(Guid.NewGuid(), 90690, 3, []);
         var dataCollector = new FakeDataCollectorService(expectedOpportunity);
         var processingState = new FakeProcessingStateService(true);
         var service = CreateService(
