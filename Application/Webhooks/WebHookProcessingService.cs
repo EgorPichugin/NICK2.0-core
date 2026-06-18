@@ -1,4 +1,5 @@
 using System.Text.Json;
+using NICK2._0_core.Application.Aircall;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks.Commands;
 using NICK2._0_core.Application.Webhooks.Services;
@@ -11,9 +12,19 @@ public sealed class WebHookProcessingService(
     IOpportunityStatusSnapshotService opportunityStatusSnapshotService,
     IProcessingStateService processingStateService,
     IDataCollectorService dataCollectorService,
+    IAircallClient aircallClient,
     ILogger<WebHookProcessingService>? logger = null) : IWebHookProcessingService
 {
-    /// <inheritdoc />
+    /// <summary>
+    /// Processes a SmartMoving opportunity status webhook, collects matching SmartMoving and Aircall data,
+    /// and saves the collected snapshots when the webhook should be handled.
+    /// </summary>
+    /// <param name="command">The webhook command containing the opportunity status change payload.</param>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <returns>
+    /// The collected SmartMoving opportunity when processing succeeds; otherwise, <see langword="null" />
+    /// when the webhook is skipped or the opportunity cannot be found.
+    /// </returns>
     public async Task<SmartMovingOpportunity?> ProcessOpportunityStatusChanged(
         ProcessOpportunityStatusChangedCommand command,
         CancellationToken cancellationToken)
@@ -94,8 +105,16 @@ public sealed class WebHookProcessingService(
             return null;
         }
 
-        await processingStateService.MarkProcessed(command, cancellationToken);
+        var calls = await aircallClient.GetCalls(
+            opportunity.CustomerPhoneNumber,
+            cancellationToken);
+
         var opportunitySnapshotPath = await SaveOpportunitySnapshot(opportunity, cancellationToken);
+        var aircallCallsSnapshotPath = await SaveAircallCallsSnapshot(
+            opportunity.Id,
+            calls,
+            cancellationToken);
+        await processingStateService.MarkProcessed(command, cancellationToken);
 
         logger?.LogInformation(
             "Processed SmartMoving webhook {EventType} for opportunity {OpportunityId} with status {OpportunityStatus}.",
@@ -105,10 +124,19 @@ public sealed class WebHookProcessingService(
         logger?.LogInformation(
             "Saved SmartMoving opportunity snapshot to {OutputPath}.",
             opportunitySnapshotPath);
+        logger?.LogInformation(
+            "Saved Aircall calls snapshot to {OutputPath}.",
+            aircallCallsSnapshotPath);
 
         return opportunity;
     }
 
+    /// <summary>
+    /// Saves the collected SmartMoving opportunity data to a JSON snapshot file in the output directory.
+    /// </summary>
+    /// <param name="opportunity">The SmartMoving opportunity data to persist.</param>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <returns>The full path to the created snapshot file.</returns>
     private static async Task<string> SaveOpportunitySnapshot(
         SmartMovingOpportunity opportunity,
         CancellationToken cancellationToken)
@@ -124,6 +152,38 @@ public sealed class WebHookProcessingService(
         await JsonSerializer.SerializeAsync(
             stream,
             opportunity,
+            new JsonSerializerOptions
+            {
+                WriteIndented = true
+            },
+            cancellationToken);
+
+        return outputPath;
+    }
+
+    /// <summary>
+    /// Saves the Aircall calls collected for an opportunity to a JSON snapshot file in the output directory.
+    /// </summary>
+    /// <param name="opportunityId">The SmartMoving opportunity identifier used to name the snapshot file.</param>
+    /// <param name="calls">The Aircall calls to persist.</param>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <returns>The full path to the created snapshot file.</returns>
+    private static async Task<string> SaveAircallCallsSnapshot(
+        Guid opportunityId,
+        IReadOnlyCollection<AircallCall> calls,
+        CancellationToken cancellationToken)
+    {
+        var outputDirectory = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDirectory);
+
+        var outputPath = Path.Combine(
+            outputDirectory,
+            $"aircall-calls-{opportunityId}.json");
+
+        await using var stream = File.Create(outputPath);
+        await JsonSerializer.SerializeAsync(
+            stream,
+            calls,
             new JsonSerializerOptions
             {
                 WriteIndented = true

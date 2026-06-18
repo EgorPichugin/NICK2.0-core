@@ -1,14 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace NICK2._0_core.Application.Aircall;
 
 public sealed record AircallCall(
+    [property: JsonPropertyName("id")]
     long Id,
+    [property: JsonPropertyName("direction")]
     string Direction,
-    IReadOnlyCollection<AircallCallUtterance> Utterances);
-
-public sealed record AircallCallUtterance(
-    decimal StartTime,
-    decimal EndTime,
-    string Text,
-    string ParticipantType,
-    string? PhoneNumber,
-    long? UserId);
+    [property: JsonPropertyName("summary")]
+    string Summary);

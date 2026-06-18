@@ -7,24 +7,11 @@ public static class AircallCallMapper
 {
     public static AircallCall ToAircallCall(
         this AircallCallSummaryApiResponse call,
-        AircallCallTranscriptionApiResponse transcriptionResponse)
+        AircallCallAiSummaryApiResponse summaryResponse)
     {
-        var utterances = transcriptionResponse
-            .Transcription?
-            .Content?
-            .Utterances
-            .Select(utterance => new AircallCallUtterance(
-                utterance.StartTime,
-                utterance.EndTime,
-                utterance.Text,
-                utterance.ParticipantType,
-                utterance.PhoneNumber,
-                utterance.UserId))
-            .ToArray() ?? [];
-
         return new AircallCall(
             call.Id,
             call.Direction,
-            utterances);
+            summaryResponse.Summary?.Content.Trim() ?? string.Empty);
     }
 }

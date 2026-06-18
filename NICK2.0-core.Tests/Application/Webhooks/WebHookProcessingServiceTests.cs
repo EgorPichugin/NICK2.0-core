@@ -1,3 +1,4 @@
+using NICK2._0_core.Application.Aircall;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks;
 using NICK2._0_core.Application.Webhooks.Commands;
@@ -96,11 +97,13 @@ public sealed class WebHookProcessingServiceTests
     {
         var expectedOpportunity = new SmartMovingOpportunity(Guid.NewGuid(), 90690, "7472874522", 3, []);
         var dataCollector = new FakeDataCollectorService(expectedOpportunity);
+        var aircallClient = new FakeAircallClient([new AircallCall(812, "outbound", "Client asks for a moving estimate.")]);
         var processingState = new FakeProcessingStateService(true);
         var service = CreateService(
             opportunityStatusSnapshotService: new FakeOpportunityStatusSnapshotService(true),
             processingStateService: processingState,
-            dataCollectorService: dataCollector);
+            dataCollectorService: dataCollector,
+            aircallClient: aircallClient);
 
         var result = await service.ProcessOpportunityStatusChanged(
             CreateCommand(
@@ -110,6 +113,8 @@ public sealed class WebHookProcessingServiceTests
 
         Assert.Equal(expectedOpportunity, result);
         Assert.Equal(1, dataCollector.CollectCallCount);
+        Assert.Equal(1, aircallClient.GetCallsCallCount);
+        Assert.Equal("7472874522", aircallClient.CustomerPhoneNumber);
         Assert.Equal(1, processingState.MarkProcessedCallCount);
     }
 
@@ -117,13 +122,15 @@ public sealed class WebHookProcessingServiceTests
         IStatusValidationService? statusValidationService = null,
         IOpportunityStatusSnapshotService? opportunityStatusSnapshotService = null,
         IProcessingStateService? processingStateService = null,
-        IDataCollectorService? dataCollectorService = null)
+        IDataCollectorService? dataCollectorService = null,
+        IAircallClient? aircallClient = null)
     {
         return new WebHookProcessingService(
             statusValidationService ?? new FakeStatusValidationService(true),
             opportunityStatusSnapshotService ?? new FakeOpportunityStatusSnapshotService(true),
             processingStateService ?? new FakeProcessingStateService(true),
-            dataCollectorService ?? new FakeDataCollectorService());
+            dataCollectorService ?? new FakeDataCollectorService(),
+            aircallClient ?? new FakeAircallClient());
     }
 
     private static ProcessOpportunityStatusChangedCommand CreateCommand(
@@ -193,6 +200,24 @@ public sealed class WebHookProcessingServiceTests
             CollectCallCount++;
 
             return Task.FromResult(opportunity);
+        }
+    }
+
+    private sealed class FakeAircallClient(
+        IReadOnlyCollection<AircallCall>? calls = null) : IAircallClient
+    {
+        public int GetCallsCallCount { get; private set; }
+
+        public string? CustomerPhoneNumber { get; private set; }
+
+        public Task<IReadOnlyCollection<AircallCall>> GetCalls(
+            string customerPhoneNumber,
+            CancellationToken cancellationToken)
+        {
+            GetCallsCallCount++;
+            CustomerPhoneNumber = customerPhoneNumber;
+
+            return Task.FromResult(calls ?? []);
         }
     }
 }

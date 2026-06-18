@@ -45,54 +45,24 @@ public sealed class AircallApiResponseTests
     }
 
     [Fact]
-    public void TranscriptionResponse_DeserializesExpectedFields()
+    public void SummaryResponse_DeserializesExpectedFields()
     {
         const string json = """
         {
-          "transcription": {
-            "id": 68271,
-            "call_id": 5237603,
-            "call_created_at": "2024-07-26T13:30:54.000Z",
-            "type": "call",
-            "content": {
-              "language": "en",
-              "utterances": [
-                {
-                  "start_time": 12.54,
-                  "end_time": 13.8,
-                  "text": "Okay,",
-                  "participant_type": "external",
-                  "phone_number": "+33679198915"
-                },
-                {
-                  "start_time": 238.08,
-                  "end_time": 239.48,
-                  "text": "Okay, I guess that's enough.",
-                  "participant_type": "internal",
-                  "user_id": 123
-                }
-              ]
-            }
+          "summary": {
+            "id": 63485433,
+            "call_id": 3557801845,
+            "created_at": "2026-03-02T23:53:27.000Z",
+            "content": "The conversation is a client inquiry to a moving company."
           }
         }
         """;
 
-        var result = JsonSerializer.Deserialize<AircallCallTranscriptionApiResponse>(json);
+        var result = JsonSerializer.Deserialize<AircallCallAiSummaryApiResponse>(json);
 
         Assert.NotNull(result);
-        Assert.Equal(5237603, result.Transcription?.CallId);
-        Assert.Equal("en", result.Transcription?.Content?.Language);
-        Assert.Collection(
-            result.Transcription?.Content?.Utterances ?? [],
-            utterance =>
-            {
-                Assert.Equal("external", utterance.ParticipantType);
-                Assert.Equal("+33679198915", utterance.PhoneNumber);
-            },
-            utterance =>
-            {
-                Assert.Equal("internal", utterance.ParticipantType);
-                Assert.Equal(123, utterance.UserId);
-            });
+        Assert.Equal(63485433, result.Summary?.Id);
+        Assert.Equal(3557801845, result.Summary?.CallId);
+        Assert.Equal("The conversation is a client inquiry to a moving company.", result.Summary?.Content);
     }
 }
