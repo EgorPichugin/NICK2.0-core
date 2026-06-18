@@ -12,14 +12,14 @@ public sealed class OpportunityStatusSnapshotService(
         ProcessOpportunityStatusChangedCommand command,
         CancellationToken cancellationToken)
     {
-        var currentStatus = (OpportunityStatus)command.OpportunityStatus;
+        var currentStatus = (EOpportunityStatus)command.OpportunityStatus;
         var previousStatus = await repository.UpsertStatus(
             command.OpportunityId,
             currentStatus,
             cancellationToken);
 
-        var shouldProcess = currentStatus == OpportunityStatus.Booked
-            && previousStatus is OpportunityStatus.Opportunity or OpportunityStatus.Lost;
+        var shouldProcess = currentStatus == EOpportunityStatus.Booked
+            && previousStatus is EOpportunityStatus.Opportunity or EOpportunityStatus.Lost;
 
         logger?.LogInformation(
             "Updated opportunity status snapshot for {OpportunityId}. PreviousStatus: {PreviousStatus}. CurrentStatus: {CurrentStatus}. ShouldProcess: {ShouldProcess}.",

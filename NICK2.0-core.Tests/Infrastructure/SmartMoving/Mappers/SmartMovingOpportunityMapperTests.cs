@@ -64,6 +64,7 @@ public sealed class SmartMovingOpportunityMapperTests
 
         Assert.Equal(id, result.Id);
         Assert.Equal(90690, result.QuoteNumber);
+        Assert.Equal("7472874522", result.CustomerPhoneNumber);
         Assert.Equal(3, result.Status);
         var job = Assert.Single(result.Jobs);
         Assert.Equal(jobId, job.Id);

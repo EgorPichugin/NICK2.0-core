@@ -12,6 +12,7 @@ public static class SmartMovingOpportunityMapper
         return new SmartMovingOpportunity(
             response.Id,
             response.QuoteNumber,
+            response.Customer.PhoneNumber,
             response.Status,
             jobs
                 .Select(job => new SmartMovingJob(

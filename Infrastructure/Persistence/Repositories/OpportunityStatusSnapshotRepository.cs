@@ -9,9 +9,9 @@ public sealed class OpportunityStatusSnapshotRepository(
     ILogger<OpportunityStatusSnapshotRepository> logger)
     : IOpportunityStatusSnapshotRepository
 {
-    public async Task<OpportunityStatus?> UpsertStatus(
+    public async Task<EOpportunityStatus?> UpsertStatus(
         Guid opportunityId,
-        OpportunityStatus currentStatus,
+        EOpportunityStatus currentStatus,
         CancellationToken cancellationToken)
     {
         var snapshot = await dbContext.OpportunityStatusSnapshots

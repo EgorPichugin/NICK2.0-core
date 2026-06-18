@@ -19,7 +19,7 @@ public sealed class ProcessingStateServiceTests
         Assert.True(shouldProcess);
         Assert.Equal(command.EventType, repository.EventType);
         Assert.Equal(command.OpportunityId, repository.OpportunityId);
-        Assert.Equal(OpportunityStatus.Booked, repository.OpportunityStatus);
+        Assert.Equal(EOpportunityStatus.Booked, repository.OpportunityStatus);
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public sealed class ProcessingStateServiceTests
         Assert.Equal(1, repository.MarkProcessedCallCount);
         Assert.Equal(command.EventType, repository.EventType);
         Assert.Equal(command.OpportunityId, repository.OpportunityId);
-        Assert.Equal(OpportunityStatus.Booked, repository.OpportunityStatus);
+        Assert.Equal(EOpportunityStatus.Booked, repository.OpportunityStatus);
     }
 
     private static ProcessOpportunityStatusChangedCommand CreateCommand()
@@ -42,7 +42,7 @@ public sealed class ProcessingStateServiceTests
         return new ProcessOpportunityStatusChangedCommand(
             ProcessOpportunityStatusChangedCommand.ExpectedEventType,
             Guid.NewGuid(),
-            (int)OpportunityStatus.Booked);
+            (int)EOpportunityStatus.Booked);
     }
 
     private sealed class FakeProcessingStateRepository(bool shouldStartProcessing)
@@ -52,14 +52,14 @@ public sealed class ProcessingStateServiceTests
 
         public Guid? OpportunityId { get; private set; }
 
-        public OpportunityStatus? OpportunityStatus { get; private set; }
+        public EOpportunityStatus? OpportunityStatus { get; private set; }
 
         public int MarkProcessedCallCount { get; private set; }
 
         public Task<bool> TryAddProcessing(
             string eventType,
             Guid opportunityId,
-            OpportunityStatus opportunityStatus,
+            EOpportunityStatus opportunityStatus,
             CancellationToken cancellationToken)
         {
             EventType = eventType;
@@ -72,7 +72,7 @@ public sealed class ProcessingStateServiceTests
         public Task MarkProcessed(
             string eventType,
             Guid opportunityId,
-            OpportunityStatus opportunityStatus,
+            EOpportunityStatus opportunityStatus,
             CancellationToken cancellationToken)
         {
             EventType = eventType;

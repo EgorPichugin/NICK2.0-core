@@ -15,11 +15,11 @@ public sealed class OpportunityStatusSnapshotServiceTests
         var opportunityId = Guid.NewGuid();
 
         await service.UpdateAndCheckShouldProcess(
-            CreateCommand(opportunityId, OpportunityStatus.Opportunity),
+            CreateCommand(opportunityId, EOpportunityStatus.Opportunity),
             CancellationToken.None);
 
         var shouldProcess = await service.UpdateAndCheckShouldProcess(
-            CreateCommand(opportunityId, OpportunityStatus.Booked),
+            CreateCommand(opportunityId, EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.True(shouldProcess);
@@ -33,11 +33,11 @@ public sealed class OpportunityStatusSnapshotServiceTests
         var opportunityId = Guid.NewGuid();
 
         await service.UpdateAndCheckShouldProcess(
-            CreateCommand(opportunityId, OpportunityStatus.Lost),
+            CreateCommand(opportunityId, EOpportunityStatus.Lost),
             CancellationToken.None);
 
         var shouldProcess = await service.UpdateAndCheckShouldProcess(
-            CreateCommand(opportunityId, OpportunityStatus.Booked),
+            CreateCommand(opportunityId, EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.True(shouldProcess);
@@ -51,11 +51,11 @@ public sealed class OpportunityStatusSnapshotServiceTests
         var opportunityId = Guid.NewGuid();
 
         await service.UpdateAndCheckShouldProcess(
-            CreateCommand(opportunityId, OpportunityStatus.Booked),
+            CreateCommand(opportunityId, EOpportunityStatus.Booked),
             CancellationToken.None);
 
         var shouldProcess = await service.UpdateAndCheckShouldProcess(
-            CreateCommand(opportunityId, OpportunityStatus.Booked),
+            CreateCommand(opportunityId, EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.False(shouldProcess);
@@ -68,7 +68,7 @@ public sealed class OpportunityStatusSnapshotServiceTests
             new FakeOpportunityStatusSnapshotRepository());
 
         var shouldProcess = await service.UpdateAndCheckShouldProcess(
-            CreateCommand(Guid.NewGuid(), OpportunityStatus.Lost),
+            CreateCommand(Guid.NewGuid(), EOpportunityStatus.Lost),
             CancellationToken.None);
 
         Assert.False(shouldProcess);
@@ -81,7 +81,7 @@ public sealed class OpportunityStatusSnapshotServiceTests
             new FakeOpportunityStatusSnapshotRepository());
 
         var shouldProcess = await service.UpdateAndCheckShouldProcess(
-            CreateCommand(Guid.NewGuid(), OpportunityStatus.Booked),
+            CreateCommand(Guid.NewGuid(), EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.False(shouldProcess);
@@ -90,24 +90,24 @@ public sealed class OpportunityStatusSnapshotServiceTests
     private sealed class FakeOpportunityStatusSnapshotRepository
         : IOpportunityStatusSnapshotRepository
     {
-        private readonly Dictionary<Guid, OpportunityStatus> _statuses = [];
+        private readonly Dictionary<Guid, EOpportunityStatus> _statuses = [];
 
-        public Task<OpportunityStatus?> UpsertStatus(
+        public Task<EOpportunityStatus?> UpsertStatus(
             Guid opportunityId,
-            OpportunityStatus currentStatus,
+            EOpportunityStatus currentStatus,
             CancellationToken cancellationToken)
         {
             _statuses.TryGetValue(opportunityId, out var previousStatus);
             var hasPreviousStatus = _statuses.ContainsKey(opportunityId);
             _statuses[opportunityId] = currentStatus;
 
-            return Task.FromResult(hasPreviousStatus ? previousStatus : (OpportunityStatus?)null);
+            return Task.FromResult(hasPreviousStatus ? previousStatus : (EOpportunityStatus?)null);
         }
     }
 
     private static ProcessOpportunityStatusChangedCommand CreateCommand(
         Guid opportunityId,
-        OpportunityStatus status)
+        EOpportunityStatus status)
     {
         return new ProcessOpportunityStatusChangedCommand(
             ProcessOpportunityStatusChangedCommand.ExpectedEventType,

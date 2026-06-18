@@ -8,9 +8,9 @@ public sealed class ProcessingStateRecord
 
     public Guid OpportunityId { get; set; }
 
-    public OpportunityStatus OpportunityStatus { get; set; }
+    public EOpportunityStatus OpportunityStatus { get; set; }
 
-    public ProcessingState State { get; set; }
+    public EProcessingState State { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 

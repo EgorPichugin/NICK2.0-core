@@ -4,8 +4,8 @@ namespace NICK2._0_core.Application.Webhooks.Repositories;
 
 public interface IOpportunityStatusSnapshotRepository
 {
-    Task<OpportunityStatus?> UpsertStatus(
+    Task<EOpportunityStatus?> UpsertStatus(
         Guid opportunityId,
-        OpportunityStatus currentStatus,
+        EOpportunityStatus currentStatus,
         CancellationToken cancellationToken);
 }

@@ -7,12 +7,12 @@ public interface IProcessingStateRepository
     Task<bool> TryAddProcessing(
         string eventType,
         Guid opportunityId,
-        OpportunityStatus opportunityStatus,
+        EOpportunityStatus opportunityStatus,
         CancellationToken cancellationToken);
 
     Task MarkProcessed(
         string eventType,
         Guid opportunityId,
-        OpportunityStatus opportunityStatus,
+        EOpportunityStatus opportunityStatus,
         CancellationToken cancellationToken);
 }

@@ -9,7 +9,7 @@ public sealed class StatusValidationService(
     /// <inheritdoc />
     public Task<bool> IsValid(int opportunityStatus, CancellationToken cancellationToken)
     {
-        var isValid = Enum.IsDefined(typeof(OpportunityStatus), opportunityStatus);
+        var isValid = Enum.IsDefined(typeof(EOpportunityStatus), opportunityStatus);
 
         if (!isValid)
         {

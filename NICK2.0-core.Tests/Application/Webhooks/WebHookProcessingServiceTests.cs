@@ -64,7 +64,7 @@ public sealed class WebHookProcessingServiceTests
             dataCollectorService: dataCollector);
 
         var result = await service.ProcessOpportunityStatusChanged(
-            CreateCommand(opportunityStatus: (int)OpportunityStatus.Booked),
+            CreateCommand(opportunityStatus: (int)EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.Null(result);
@@ -83,7 +83,7 @@ public sealed class WebHookProcessingServiceTests
             dataCollectorService: new FakeDataCollectorService());
 
         var result = await service.ProcessOpportunityStatusChanged(
-            CreateCommand(opportunityStatus: (int)OpportunityStatus.Booked),
+            CreateCommand(opportunityStatus: (int)EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.Null(result);
@@ -94,7 +94,7 @@ public sealed class WebHookProcessingServiceTests
     [Fact]
     public async Task ProcessOpportunityStatusChanged_ReturnsOpportunityAndMarksProcessed_WhenEventIsValid()
     {
-        var expectedOpportunity = new SmartMovingOpportunity(Guid.NewGuid(), 90690, 3, []);
+        var expectedOpportunity = new SmartMovingOpportunity(Guid.NewGuid(), 90690, "7472874522", 3, []);
         var dataCollector = new FakeDataCollectorService(expectedOpportunity);
         var processingState = new FakeProcessingStateService(true);
         var service = CreateService(
@@ -105,7 +105,7 @@ public sealed class WebHookProcessingServiceTests
         var result = await service.ProcessOpportunityStatusChanged(
             CreateCommand(
                 opportunityId: expectedOpportunity.Id,
-                opportunityStatus: (int)OpportunityStatus.Booked),
+                opportunityStatus: (int)EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.Equal(expectedOpportunity, result);
