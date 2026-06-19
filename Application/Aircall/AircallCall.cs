@@ -7,5 +7,13 @@ public sealed record AircallCall(
     long Id,
     [property: JsonPropertyName("direction")]
     string Direction,
+    [property: JsonPropertyName("startedAt")]
+    DateTimeOffset? StartedAt,
+    [property: JsonPropertyName("endedAt")]
+    DateTimeOffset? EndedAt,
+    [property: JsonPropertyName("callOrder")]
+    int CallOrder,
+    [property: JsonPropertyName("isBookingConfirmationCall")]
+    bool IsBookingConfirmationCall,
     [property: JsonPropertyName("summary")]
     string Summary);

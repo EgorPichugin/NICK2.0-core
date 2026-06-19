@@ -95,9 +95,29 @@ public sealed class WebHookProcessingServiceTests
     [Fact]
     public async Task ProcessOpportunityStatusChanged_ReturnsOpportunityAndMarksProcessed_WhenEventIsValid()
     {
-        var expectedOpportunity = new SmartMovingOpportunity(Guid.NewGuid(), 90690, "7472874522", 3, []);
+        var expectedOpportunity = new SmartMovingOpportunity(
+            Guid.NewGuid(),
+            90690,
+            "7472874522",
+            3,
+            DateTimeOffset.Parse("2026-06-18T00:00:00Z"),
+            null,
+            null,
+            [],
+            []);
+        var aircallCalls = new[]
+        {
+            new AircallCall(
+                812,
+                "outbound",
+                DateTimeOffset.Parse("2026-06-18T18:35:00Z"),
+                DateTimeOffset.Parse("2026-06-18T18:42:00Z"),
+                1,
+                false,
+                "Client asks for a moving estimate.")
+        };
         var dataCollector = new FakeDataCollectorService(expectedOpportunity);
-        var aircallClient = new FakeAircallClient([new AircallCall(812, "outbound", "Client asks for a moving estimate.")]);
+        var aircallClient = new FakeAircallClient(aircallCalls);
         var processingState = new FakeProcessingStateService(true);
         var service = CreateService(
             opportunityStatusSnapshotService: new FakeOpportunityStatusSnapshotService(true),
@@ -111,7 +131,7 @@ public sealed class WebHookProcessingServiceTests
                 opportunityStatus: (int)EOpportunityStatus.Booked),
             CancellationToken.None);
 
-        Assert.Equal(expectedOpportunity, result);
+        Assert.Equal(expectedOpportunity with { Summaries = aircallCalls }, result);
         Assert.Equal(1, dataCollector.CollectCallCount);
         Assert.Equal(1, aircallClient.GetCallsCallCount);
         Assert.Equal("7472874522", aircallClient.CustomerPhoneNumber);

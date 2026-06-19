@@ -9,6 +9,7 @@ public sealed class SmartMovingOpportunityMapperTests
     public void ToSmartMovingOpportunity_MapsExpectedFields()
     {
         var id = Guid.NewGuid();
+        var jobId = Guid.NewGuid();
         var response = new SmartMovingOpportunityApiResponse(
             id,
             90690,
@@ -36,7 +37,27 @@ public sealed class SmartMovingOpportunityMapperTests
             null,
             null,
             null,
-            [],
+            [
+                new SmartMovingJobApiResponse(
+                    jobId,
+                    "JOB-1",
+                    20260619,
+                    0,
+                    true,
+                    null,
+                    null,
+                    null,
+                    null,
+                    new SmartMovingArrivalWindowApiResponse(
+                        Guid.NewGuid(),
+                        "2:00 PM - 5:00 PM",
+                        14,
+                        17,
+                        false),
+                    null,
+                    [],
+                    null)
+            ],
             null,
             null,
             null,
@@ -47,7 +68,6 @@ public sealed class SmartMovingOpportunityMapperTests
             new SmartMovingTariffApiResponse(Guid.NewGuid(), "RMC Los Angeles"),
             DateTimeOffset.Parse("2026-04-27T19:46:54.2085361+00:00"));
 
-        var jobId = Guid.NewGuid();
         var result = response.ToSmartMovingOpportunity(
             [
                 new SmartMovingJobDetailsApiResponse(
@@ -66,9 +86,15 @@ public sealed class SmartMovingOpportunityMapperTests
         Assert.Equal(90690, result.QuoteNumber);
         Assert.Equal("7472874522", result.CustomerPhoneNumber);
         Assert.Equal(3, result.Status);
+        Assert.Equal(DateTimeOffset.Parse("2026-04-27T19:46:54.2085361+00:00"), result.CreatedAt);
+        Assert.Null(result.BookedAt);
+        Assert.Null(result.StatusChangedAt);
+        Assert.Empty(result.Summaries);
         var job = Assert.Single(result.Jobs);
         Assert.Equal(jobId, job.Id);
         Assert.Equal("JOB-1", job.JobNumber);
+        Assert.Equal(new DateOnly(2026, 06, 19), job.MoveDate);
+        Assert.Equal("2:00 PM - 5:00 PM", job.ArrivalWindow);
         Assert.Equal("Crew notes", job.CrewNotes);
     }
 }

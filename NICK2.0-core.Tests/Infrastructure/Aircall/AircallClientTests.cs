@@ -27,8 +27,8 @@ public sealed class AircallClientTests
                         "previous_page_link": null
                       },
                       "calls": [
-                        { "id": 812, "direction": "outbound", "raw_digits": "+1 800-123-4567" },
-                        { "id": 813, "direction": "inbound", "raw_digits": "+1 800-123-4567" }
+                        { "id": 812, "direction": "outbound", "started_at": 1781807700, "ended_at": 1781808120, "raw_digits": "+1 800-123-4567" },
+                        { "id": 813, "direction": "inbound", "started_at": 1781810000, "ended_at": 1781810300, "raw_digits": "+1 800-123-4567" }
                       ]
                     }
                     """),
@@ -48,7 +48,7 @@ public sealed class AircallClientTests
                         "id": 63485434,
                         "call_id": 813,
                         "created_at": "2026-03-02T23:54:27.000Z",
-                        "content": "Manager follows up about inventory."
+                        "content": "Customer confirmed and booked a move."
                       }
                     }
                     """),
@@ -72,13 +72,21 @@ public sealed class AircallClientTests
             {
                 Assert.Equal(812, call.Id);
                 Assert.Equal("outbound", call.Direction);
+                Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1781807700), call.StartedAt);
+                Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1781808120), call.EndedAt);
+                Assert.Equal(1, call.CallOrder);
+                Assert.False(call.IsBookingConfirmationCall);
                 Assert.Equal("Client asks for a moving estimate.", call.Summary);
             },
             call =>
             {
                 Assert.Equal(813, call.Id);
                 Assert.Equal("inbound", call.Direction);
-                Assert.Equal("Manager follows up about inventory.", call.Summary);
+                Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1781810000), call.StartedAt);
+                Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1781810300), call.EndedAt);
+                Assert.Equal(2, call.CallOrder);
+                Assert.True(call.IsBookingConfirmationCall);
+                Assert.Equal("Customer confirmed and booked a move.", call.Summary);
             });
         Assert.Contains(
             handler.Requests,

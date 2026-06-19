@@ -1,8 +1,10 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using NICK2._0_core.Application.Aircall;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks.Commands;
 using NICK2._0_core.Application.Webhooks.Services;
+using NICK2._0_core.Domain;
 
 namespace NICK2._0_core.Application.Webhooks;
 
@@ -105,15 +107,15 @@ public sealed class WebHookProcessingService(
             return null;
         }
 
-        var calls = await aircallClient.GetCalls(
+        var summaries = await aircallClient.GetCalls(
             opportunity.CustomerPhoneNumber,
             cancellationToken);
+        opportunity = opportunity with
+        {
+            Summaries = summaries
+        };
 
         var opportunitySnapshotPath = await SaveOpportunitySnapshot(opportunity, cancellationToken);
-        var aircallCallsSnapshotPath = await SaveAircallCallsSnapshot(
-            opportunity.Id,
-            calls,
-            cancellationToken);
         await processingStateService.MarkProcessed(command, cancellationToken);
 
         logger?.LogInformation(
@@ -124,9 +126,6 @@ public sealed class WebHookProcessingService(
         logger?.LogInformation(
             "Saved SmartMoving opportunity snapshot to {OutputPath}.",
             opportunitySnapshotPath);
-        logger?.LogInformation(
-            "Saved Aircall calls snapshot to {OutputPath}.",
-            aircallCallsSnapshotPath);
 
         return opportunity;
     }
@@ -151,7 +150,7 @@ public sealed class WebHookProcessingService(
         await using var stream = File.Create(outputPath);
         await JsonSerializer.SerializeAsync(
             stream,
-            opportunity,
+            CollectedOpportunitySnapshot.From(opportunity),
             new JsonSerializerOptions
             {
                 WriteIndented = true
@@ -161,35 +160,79 @@ public sealed class WebHookProcessingService(
         return outputPath;
     }
 
-    /// <summary>
-    /// Saves the Aircall calls collected for an opportunity to a JSON snapshot file in the output directory.
-    /// </summary>
-    /// <param name="opportunityId">The SmartMoving opportunity identifier used to name the snapshot file.</param>
-    /// <param name="calls">The Aircall calls to persist.</param>
-    /// <param name="cancellationToken">A token used to cancel the operation.</param>
-    /// <returns>The full path to the created snapshot file.</returns>
-    private static async Task<string> SaveAircallCallsSnapshot(
-        Guid opportunityId,
-        IReadOnlyCollection<AircallCall> calls,
-        CancellationToken cancellationToken)
+    private sealed record CollectedOpportunitySnapshot(
+        [property: JsonPropertyName("Opportunity")]
+        OpportunitySnapshot Opportunity,
+        [property: JsonPropertyName("Jobs")]
+        IReadOnlyCollection<JobSnapshot> Jobs,
+        [property: JsonPropertyName("Aircall")]
+        AircallSnapshot Aircall)
     {
-        var outputDirectory = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDirectory);
+        public static CollectedOpportunitySnapshot From(SmartMovingOpportunity opportunity)
+        {
+            return new CollectedOpportunitySnapshot(
+                new OpportunitySnapshot(
+                    opportunity.Id,
+                    opportunity.QuoteNumber,
+                    opportunity.CustomerPhoneNumber,
+                    new OpportunityStatusSnapshot(
+                        opportunity.Status,
+                        GetOpportunityStatusName(opportunity.Status)),
+                    opportunity.CreatedAt,
+                    opportunity.BookedAt,
+                    opportunity.StatusChangedAt),
+                opportunity.Jobs
+                    .Select(job => new JobSnapshot(
+                        job.Id,
+                        job.JobNumber,
+                        job.MoveDate,
+                        job.ArrivalWindow,
+                        job.CrewNotes))
+                    .ToArray(),
+                new AircallSnapshot(opportunity.Summaries));
+        }
 
-        var outputPath = Path.Combine(
-            outputDirectory,
-            $"aircall-calls-{opportunityId}.json");
-
-        await using var stream = File.Create(outputPath);
-        await JsonSerializer.SerializeAsync(
-            stream,
-            calls,
-            new JsonSerializerOptions
-            {
-                WriteIndented = true
-            },
-            cancellationToken);
-
-        return outputPath;
+        private static string GetOpportunityStatusName(int status)
+        {
+            return Enum.GetName(typeof(EOpportunityStatus), status) ?? status.ToString();
+        }
     }
+
+    private sealed record OpportunitySnapshot(
+        [property: JsonPropertyName("id")]
+        Guid Id,
+        [property: JsonPropertyName("quoteNumber")]
+        int QuoteNumber,
+        [property: JsonPropertyName("customerPhoneNumber")]
+        string CustomerPhoneNumber,
+        [property: JsonPropertyName("status")]
+        OpportunityStatusSnapshot Status,
+        [property: JsonPropertyName("createdAt")]
+        DateTimeOffset CreatedAt,
+        [property: JsonPropertyName("bookedAt")]
+        DateTimeOffset? BookedAt,
+        [property: JsonPropertyName("statusChangedAt")]
+        DateTimeOffset? StatusChangedAt);
+
+    private sealed record OpportunityStatusSnapshot(
+        [property: JsonPropertyName("code")]
+        int Code,
+        [property: JsonPropertyName("name")]
+        string Name);
+
+    private sealed record JobSnapshot(
+        [property: JsonPropertyName("id")]
+        Guid Id,
+        [property: JsonPropertyName("jobNumber")]
+        string JobNumber,
+        [property: JsonPropertyName("moveDate")]
+        DateOnly? MoveDate,
+        [property: JsonPropertyName("arrivalWindow")]
+        string? ArrivalWindow,
+        [property: JsonPropertyName("crewNotes")]
+        string? CrewNotes);
+
+    private sealed record AircallSnapshot(
+        [property: JsonPropertyName("calls")]
+        IReadOnlyCollection<AircallCall> Calls);
 }

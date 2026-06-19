@@ -9,16 +9,33 @@ public static class SmartMovingOpportunityMapper
         this SmartMovingOpportunityApiResponse response,
         IReadOnlyCollection<SmartMovingJobDetailsApiResponse> jobs)
     {
+        var jobDetailsById = jobs.ToDictionary(job => job.Id);
+
         return new SmartMovingOpportunity(
             response.Id,
             response.QuoteNumber,
             response.Customer.PhoneNumber,
             response.Status,
-            jobs
+            response.CreatedAtUtc,
+            null,
+            null,
+            response.Jobs
                 .Select(job => new SmartMovingJob(
                     job.Id,
                     job.JobNumber,
-                    job.Notes?.CrewNotes))
-                .ToArray());
+                    ToDateOnly(job.JobDate),
+                    job.ArrivalWindow.Description,
+                    jobDetailsById.GetValueOrDefault(job.Id)?.Notes?.CrewNotes))
+                .ToArray(),
+            []);
+    }
+
+    private static DateOnly? ToDateOnly(int date)
+    {
+        var text = date.ToString();
+
+        return DateOnly.TryParseExact(text, "yyyyMMdd", out var parsed)
+            ? parsed
+            : null;
     }
 }

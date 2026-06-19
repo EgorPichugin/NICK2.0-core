@@ -1,3 +1,5 @@
+using NICK2._0_core.Application.Aircall;
+
 namespace NICK2._0_core.Application.SmartMoving;
 
 public sealed record SmartMovingOpportunity(
@@ -5,9 +7,15 @@ public sealed record SmartMovingOpportunity(
     int QuoteNumber,
     string CustomerPhoneNumber,
     int Status,
-    IReadOnlyCollection<SmartMovingJob> Jobs);
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? BookedAt,
+    DateTimeOffset? StatusChangedAt,
+    IReadOnlyCollection<SmartMovingJob> Jobs,
+    IReadOnlyCollection<AircallCall> Summaries);
 
 public sealed record SmartMovingJob(
     Guid Id,
     string JobNumber,
+    DateOnly? MoveDate,
+    string? ArrivalWindow,
     string? CrewNotes);

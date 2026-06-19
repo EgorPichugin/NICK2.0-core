@@ -26,6 +26,7 @@ public sealed class AircallClient(
 
         var callSummaries = await GetCallSummaries(customerPhoneNumber, cancellationToken);
         var calls = new List<AircallCall>();
+        var callOrder = 1;
 
         foreach (var callSummary in callSummaries)
         {
@@ -33,8 +34,10 @@ public sealed class AircallClient(
 
             if (summary is not null)
             {
-                calls.Add(callSummary.ToAircallCall(summary));
+                calls.Add(callSummary.ToAircallCall(summary, callOrder));
             }
+
+            callOrder++;
         }
 
         logger.LogDebug(
