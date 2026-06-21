@@ -100,6 +100,7 @@ public sealed class WebHookProcessingServiceTests
             Guid.NewGuid(),
             90690,
             "7472874522",
+            EType.Moving,
             3,
             DateTimeOffset.Parse("2026-06-18T00:00:00Z"),
             null,

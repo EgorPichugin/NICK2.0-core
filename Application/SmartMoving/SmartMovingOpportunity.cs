@@ -1,4 +1,5 @@
 using NICK2._0_core.Application.Aircall;
+using NICK2._0_core.Domain;
 
 namespace NICK2._0_core.Application.SmartMoving;
 
@@ -6,6 +7,7 @@ public sealed record SmartMovingOpportunity(
     Guid Id,
     int QuoteNumber,
     string CustomerPhoneNumber,
+    EType Type,
     int Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset? BookedAt,

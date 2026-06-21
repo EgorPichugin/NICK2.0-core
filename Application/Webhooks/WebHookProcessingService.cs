@@ -176,6 +176,9 @@ public sealed class WebHookProcessingService(
                     opportunity.Id,
                     opportunity.QuoteNumber,
                     opportunity.CustomerPhoneNumber,
+                    new OpportunityTypeSnapshot(
+                        (int)opportunity.Type,
+                        GetOpportunityTypeName(opportunity.Type)),
                     new OpportunityStatusSnapshot(
                         opportunity.Status,
                         GetOpportunityStatusName(opportunity.Status)),
@@ -197,6 +200,11 @@ public sealed class WebHookProcessingService(
         {
             return Enum.GetName(typeof(EOpportunityStatus), status) ?? status.ToString();
         }
+
+        private static string GetOpportunityTypeName(EType type)
+        {
+            return Enum.GetName(typeof(EType), type) ?? ((int)type).ToString();
+        }
     }
 
     private sealed record OpportunitySnapshot(
@@ -206,6 +214,8 @@ public sealed class WebHookProcessingService(
         int QuoteNumber,
         [property: JsonPropertyName("customerPhoneNumber")]
         string CustomerPhoneNumber,
+        [property: JsonPropertyName("type")]
+        OpportunityTypeSnapshot Type,
         [property: JsonPropertyName("status")]
         OpportunityStatusSnapshot Status,
         [property: JsonPropertyName("createdAt")]
@@ -216,6 +226,12 @@ public sealed class WebHookProcessingService(
         DateTimeOffset? StatusChangedAt);
 
     private sealed record OpportunityStatusSnapshot(
+        [property: JsonPropertyName("code")]
+        int Code,
+        [property: JsonPropertyName("name")]
+        string Name);
+
+    private sealed record OpportunityTypeSnapshot(
         [property: JsonPropertyName("code")]
         int Code,
         [property: JsonPropertyName("name")]
