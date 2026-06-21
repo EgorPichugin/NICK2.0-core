@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -52,7 +53,7 @@ public sealed class AircallClient(
             return [];
         }
 
-        var callSummaries = await GetCallSummaries(customerPhoneNumber, cancellationToken);
+        var callSummaries = await GetCallSummaries(customerPhoneNumber, null, cancellationToken);
 
         return callSummaries
             .Select(callSummary => callSummary.ToAircallCallSearchResult())
@@ -72,6 +73,7 @@ public sealed class AircallClient(
     /// <inheritdoc />
     public async Task<IReadOnlyCollection<AircallCall>> GetCalls(
         string customerPhoneNumber,
+        DateTimeOffset callsFrom,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(customerPhoneNumber))
@@ -79,7 +81,7 @@ public sealed class AircallClient(
             return [];
         }
 
-        var callSummaries = await GetCallSummaries(customerPhoneNumber, cancellationToken);
+        var callSummaries = await GetCallSummaries(customerPhoneNumber, callsFrom, cancellationToken);
         var calls = new List<AircallCall>();
         var callOrder = 1;
 
@@ -105,11 +107,12 @@ public sealed class AircallClient(
 
     private async Task<IReadOnlyCollection<AircallCallSummaryApiResponse>> GetCallSummaries(
         string customerPhoneNumber,
+        DateTimeOffset? callsFrom,
         CancellationToken cancellationToken)
     {
         var settings = options.Value;
         var calls = new List<AircallCallSummaryApiResponse>();
-        var requestUri = BuildCallsRequestUri(settings, customerPhoneNumber);
+        var requestUri = BuildCallsRequestUri(settings, customerPhoneNumber, callsFrom);
 
         while (!string.IsNullOrWhiteSpace(requestUri))
         {
@@ -156,7 +159,7 @@ public sealed class AircallClient(
     {
         var settings = options.Value;
         var pages = new List<JsonElement>();
-        var requestUri = BuildCallsRequestUri(settings, customerPhoneNumber);
+        var requestUri = BuildCallsRequestUri(settings, customerPhoneNumber, null);
 
         while (!string.IsNullOrWhiteSpace(requestUri))
         {
@@ -305,10 +308,17 @@ public sealed class AircallClient(
 
     private static string BuildCallsRequestUri(
         AircallOptions settings,
-        string customerPhoneNumber)
+        string customerPhoneNumber,
+        DateTimeOffset? callsFrom)
     {
         var query = HttpUtility.ParseQueryString(string.Empty);
         query[settings.PhoneNumberQueryParameter] = NormalizePhoneNumber(customerPhoneNumber);
+        if (callsFrom is not null)
+        {
+            query["from"] = callsFrom.Value
+                .ToUnixTimeSeconds()
+                .ToString(CultureInfo.InvariantCulture);
+        }
 
         return $"{settings.CallsPath.TrimStart('/')}?{query}";
     }

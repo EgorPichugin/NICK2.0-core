@@ -109,6 +109,7 @@ public sealed class WebHookProcessingService(
 
         var summaries = await aircallClient.GetCalls(
             opportunity.CustomerPhoneNumber,
+            opportunity.CreatedAt.AddDays(-1),
             cancellationToken);
         opportunity = opportunity with
         {

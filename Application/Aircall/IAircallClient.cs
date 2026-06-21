@@ -51,9 +51,11 @@ public interface IAircallClient
     /// Gets calls and their AI summaries by customer phone number.
     /// </summary>
     /// <param name="customerPhoneNumber">The customer phone number used to search calls.</param>
+    /// <param name="callsFrom">The earliest call start date to include in the search.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The matched calls with AI summary content.</returns>
     Task<IReadOnlyCollection<AircallCall>> GetCalls(
         string customerPhoneNumber,
+        DateTimeOffset callsFrom,
         CancellationToken cancellationToken);
 }

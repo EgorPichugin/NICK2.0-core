@@ -1,4 +1,5 @@
 using NICK2._0_core.Application.Aircall;
+using NICK2._0_core.Application.Developer;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks;
 using NICK2._0_core.Application.Webhooks.Commands;
@@ -135,6 +136,9 @@ public sealed class WebHookProcessingServiceTests
         Assert.Equal(1, dataCollector.CollectCallCount);
         Assert.Equal(1, aircallClient.GetCallsCallCount);
         Assert.Equal("7472874522", aircallClient.CustomerPhoneNumber);
+        Assert.Equal(
+            expectedOpportunity.CreatedAt.AddDays(-1),
+            aircallClient.CallsFrom);
         Assert.Equal(1, processingState.MarkProcessedCallCount);
     }
 
@@ -230,6 +234,8 @@ public sealed class WebHookProcessingServiceTests
 
         public string? CustomerPhoneNumber { get; private set; }
 
+        public DateTimeOffset? CallsFrom { get; private set; }
+
         public Task<DevAircallCallSearchResponse> SearchCallsForDeveloper(
             string customerPhoneNumber,
             CancellationToken cancellationToken)
@@ -260,10 +266,12 @@ public sealed class WebHookProcessingServiceTests
 
         public Task<IReadOnlyCollection<AircallCall>> GetCalls(
             string customerPhoneNumber,
+            DateTimeOffset callsFrom,
             CancellationToken cancellationToken)
         {
             GetCallsCallCount++;
             CustomerPhoneNumber = customerPhoneNumber;
+            CallsFrom = callsFrom;
 
             return Task.FromResult(calls ?? []);
         }

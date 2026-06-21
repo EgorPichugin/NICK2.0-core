@@ -146,7 +146,9 @@ public sealed class AircallClientTests
         });
         var client = CreateClient(handler);
 
-        var result = await client.GetCalls("8001234567", CancellationToken.None);
+        var callsFrom = DateTimeOffset.Parse("2026-06-17T00:00:00Z");
+
+        var result = await client.GetCalls("8001234567", callsFrom, CancellationToken.None);
 
         Assert.Collection(
             result,
@@ -172,7 +174,7 @@ public sealed class AircallClientTests
             });
         Assert.Contains(
             handler.Requests,
-            request => request.RequestUri?.PathAndQuery == "/v1/calls/search?phone_number=%2b18001234567");
+            request => request.RequestUri?.PathAndQuery == "/v1/calls/search?phone_number=%2b18001234567&from=1781654400");
     }
 
     private static HttpResponseMessage CreateJsonResponse(string json)
