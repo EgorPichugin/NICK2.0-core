@@ -4,9 +4,11 @@ using Npgsql;
 using System.Net.Http.Headers;
 using System.Text;
 using NICK2._0_core.Application.Aircall;
+using NICK2._0_core.Application.Llm;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks.Repositories;
 using NICK2._0_core.Infrastructure.Aircall;
+using NICK2._0_core.Infrastructure.Llm;
 using NICK2._0_core.Infrastructure.Persistence;
 using NICK2._0_core.Infrastructure.Persistence.Repositories;
 using NICK2._0_core.Infrastructure.SmartMoving;
@@ -31,6 +33,7 @@ public static class DependencyInjection
         services.AddHostedService<DatabaseInitializer>();
         services.AddScoped<IOpportunityStatusSnapshotRepository, OpportunityStatusSnapshotRepository>();
         services.AddScoped<IProcessingStateRepository, ProcessingStateRepository>();
+        services.AddScoped<ILlmService, LlmService>();
 
         services.AddHttpClient<ISmartMovingClient, SmartMovingClient>((serviceProvider, httpClient) =>
         {

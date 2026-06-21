@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using NICK2._0_core.Application.Aircall;
+using NICK2._0_core.Application.Llm;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks.Commands;
 using NICK2._0_core.Application.Webhooks.Services;
@@ -15,6 +16,7 @@ public sealed class WebHookProcessingService(
     IProcessingStateService processingStateService,
     IDataCollectorService dataCollectorService,
     IAircallClient aircallClient,
+    ILlmService llmService,
     ILogger<WebHookProcessingService>? logger = null) : IWebHookProcessingService
 {
     /// <summary>
@@ -115,6 +117,12 @@ public sealed class WebHookProcessingService(
         {
             Summaries = summaries
         };
+
+        var analysis = await llmService.AnalyzeOpportunity(opportunity, cancellationToken);
+        logger?.LogInformation(
+            "Received LLM analysis for SmartMoving opportunity {OpportunityId}. IsMocked: {IsMocked}.",
+            analysis.OpportunityId,
+            analysis.IsMocked);
 
         var opportunitySnapshotPath = await SaveOpportunitySnapshot(opportunity, cancellationToken);
         await processingStateService.MarkProcessed(command, cancellationToken);
