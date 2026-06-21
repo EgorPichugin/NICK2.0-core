@@ -5,6 +5,21 @@ namespace NICK2._0_core.Infrastructure.Aircall.Mappers;
 
 public static class AircallCallMapper
 {
+    public static AircallCallSearchResult ToAircallCallSearchResult(
+        this AircallCallSummaryApiResponse call)
+    {
+        return new AircallCallSearchResult(
+            call.Id,
+            call.DirectLink,
+            call.Direction,
+            call.Status,
+            ToDateTimeOffset(call.StartedAt),
+            ToDateTimeOffset(call.AnsweredAt),
+            ToDateTimeOffset(call.EndedAt),
+            call.Duration,
+            call.RawDigits);
+    }
+
     public static AircallCall ToAircallCall(
         this AircallCallSummaryApiResponse call,
         AircallCallAiSummaryApiResponse summaryResponse,
@@ -20,6 +35,21 @@ public static class AircallCallMapper
             callOrder,
             IsBookingConfirmationSummary(summary),
             summary);
+    }
+
+    public static AircallCallAiSummary? ToAircallCallAiSummary(
+        this AircallCallAiSummaryApiResponse summaryResponse)
+    {
+        if (summaryResponse.Summary is null)
+        {
+            return null;
+        }
+
+        return new AircallCallAiSummary(
+            summaryResponse.Summary.Id,
+            summaryResponse.Summary.CallId,
+            summaryResponse.Summary.CreatedAt,
+            summaryResponse.Summary.Content);
     }
 
     private static DateTimeOffset? ToDateTimeOffset(long? unixTimestamp)

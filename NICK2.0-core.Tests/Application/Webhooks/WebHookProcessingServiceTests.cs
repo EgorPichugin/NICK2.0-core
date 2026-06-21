@@ -230,6 +230,34 @@ public sealed class WebHookProcessingServiceTests
 
         public string? CustomerPhoneNumber { get; private set; }
 
+        public Task<DevAircallCallSearchResponse> SearchCallsForDeveloper(
+            string customerPhoneNumber,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<DevAircallCallAiSummaryResponse?> GetCallAiSummaryForDeveloper(
+            long callId,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<IReadOnlyCollection<AircallCallSearchResult>> SearchCalls(
+            string customerPhoneNumber,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<AircallCallAiSummary?> GetCallAiSummary(
+            long callId,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
         public Task<IReadOnlyCollection<AircallCall>> GetCalls(
             string customerPhoneNumber,
             CancellationToken cancellationToken)
