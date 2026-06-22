@@ -123,7 +123,7 @@ public sealed class WebHookProcessingService(
             processingData.AnalysisResult?.OpportunityId,
             processingData.AnalysisResult?.IsMocked);
 
-        var opportunitySnapshotPath = await SaveOpportunitySnapshot(processingData, cancellationToken);
+        // var opportunitySnapshotPath = await SaveOpportunitySnapshot(processingData, cancellationToken);
         await processingStateService.MarkProcessed(command, cancellationToken);
 
         logger?.LogInformation(
@@ -131,9 +131,9 @@ public sealed class WebHookProcessingService(
             command.EventType,
             command.OpportunityId,
             command.OpportunityStatus);
-        logger?.LogInformation(
-            "Saved SmartMoving opportunity snapshot to {OutputPath}.",
-            opportunitySnapshotPath);
+        // logger?.LogInformation(
+        //     "Saved SmartMoving opportunity snapshot to {OutputPath}.",
+        //     opportunitySnapshotPath);
 
         return opportunity;
     }
