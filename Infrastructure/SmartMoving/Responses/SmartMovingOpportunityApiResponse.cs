@@ -10,7 +10,7 @@ public sealed record SmartMovingOpportunityApiResponse(
     int Type,
     int ServiceDate,
     int Status,
-    int? LeadStatus,
+    object? LeadStatus,
     SmartMovingMoveSizeApiResponse MoveSize,
     decimal Volume,
     decimal Weight,

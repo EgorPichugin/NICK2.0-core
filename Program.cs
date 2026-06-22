@@ -2,7 +2,7 @@ using NICK2._0_core.Application;
 using NICK2._0_core.Infrastructure;
 using Scalar.AspNetCore;
 
-DotNetEnv.Env.Load();
+DotNetEnv.Env.TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
 

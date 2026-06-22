@@ -12,12 +12,12 @@ public sealed class ProcessingStateRepository(
     public async Task<bool> TryAddProcessing(
         string eventType,
         Guid opportunityId,
-        OpportunityStatus opportunityStatus,
+        EOpportunityStatus opportunityStatus,
         CancellationToken cancellationToken)
     {
         var rowsInserted = await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO processing_states ("Id", "EventType", "OpportunityId", "OpportunityStatus", "State", "CreatedAt")
-            VALUES ({Guid.NewGuid()}, {eventType}, {opportunityId}, {(int)opportunityStatus}, {(int)ProcessingState.Processing}, {DateTimeOffset.UtcNow})
+            VALUES ({Guid.NewGuid()}, {eventType}, {opportunityId}, {(int)opportunityStatus}, {(int)EProcessingState.Processing}, {DateTimeOffset.UtcNow})
             ON CONFLICT ("EventType", "OpportunityId", "OpportunityStatus") DO NOTHING
             """, cancellationToken);
 
@@ -44,7 +44,7 @@ public sealed class ProcessingStateRepository(
     public async Task MarkProcessed(
         string eventType,
         Guid opportunityId,
-        OpportunityStatus opportunityStatus,
+        EOpportunityStatus opportunityStatus,
         CancellationToken cancellationToken)
     {
         var processingState = await dbContext.ProcessingStates
@@ -65,7 +65,7 @@ public sealed class ProcessingStateRepository(
             return;
         }
 
-        processingState.State = ProcessingState.Processed;
+        processingState.State = EProcessingState.Processed;
         processingState.ProcessedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);

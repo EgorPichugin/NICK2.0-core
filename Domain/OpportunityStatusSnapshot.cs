@@ -4,9 +4,9 @@ public sealed class OpportunityStatusSnapshot
 {
     public Guid Id { get; set; }
 
-    public OpportunityStatus CurrentStatus { get; set; }
+    public EOpportunityStatus CurrentStatus { get; set; }
 
-    public OpportunityStatus? PreviousStatus { get; set; }
+    public EOpportunityStatus? PreviousStatus { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }
 }

@@ -1,6 +1,6 @@
 namespace NICK2._0_core.Domain;
 
-public enum OpportunityStatus
+public enum EOpportunityStatus
 {
     NewLead = 0,
     LeadInProgress = 1,

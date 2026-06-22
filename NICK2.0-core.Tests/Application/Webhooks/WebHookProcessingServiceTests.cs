@@ -1,3 +1,7 @@
+using NICK2._0_core.Application.Aircall;
+using NICK2._0_core.Application.Developer;
+using NICK2._0_core.Application.Llm;
+using NICK2._0_core.Application.Processing;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks;
 using NICK2._0_core.Application.Webhooks.Commands;
@@ -64,7 +68,7 @@ public sealed class WebHookProcessingServiceTests
             dataCollectorService: dataCollector);
 
         var result = await service.ProcessOpportunityStatusChanged(
-            CreateCommand(opportunityStatus: (int)OpportunityStatus.Booked),
+            CreateCommand(opportunityStatus: (int)EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.Null(result);
@@ -83,7 +87,7 @@ public sealed class WebHookProcessingServiceTests
             dataCollectorService: new FakeDataCollectorService());
 
         var result = await service.ProcessOpportunityStatusChanged(
-            CreateCommand(opportunityStatus: (int)OpportunityStatus.Booked),
+            CreateCommand(opportunityStatus: (int)EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.Null(result);
@@ -94,22 +98,56 @@ public sealed class WebHookProcessingServiceTests
     [Fact]
     public async Task ProcessOpportunityStatusChanged_ReturnsOpportunityAndMarksProcessed_WhenEventIsValid()
     {
-        var expectedOpportunity = new SmartMovingOpportunity(Guid.NewGuid(), 90690, 3);
+        var expectedOpportunity = new SmartMovingOpportunity(
+            Guid.NewGuid(),
+            90690,
+            "7472874522",
+            EType.Moving,
+            3,
+            DateTimeOffset.Parse("2026-06-18T00:00:00Z"),
+            null,
+            null,
+            []);
+        var aircallCalls = new[]
+        {
+            new AircallCall(
+                812,
+                "outbound",
+                DateTimeOffset.Parse("2026-06-18T18:35:00Z"),
+                DateTimeOffset.Parse("2026-06-18T18:42:00Z"),
+                1,
+                false,
+                "Client asks for a moving estimate.")
+        };
         var dataCollector = new FakeDataCollectorService(expectedOpportunity);
+        var aircallClient = new FakeAircallClient(aircallCalls);
+        var llmService = new FakeLlmService();
         var processingState = new FakeProcessingStateService(true);
         var service = CreateService(
             opportunityStatusSnapshotService: new FakeOpportunityStatusSnapshotService(true),
             processingStateService: processingState,
-            dataCollectorService: dataCollector);
+            dataCollectorService: dataCollector,
+            aircallClient: aircallClient,
+            llmService: llmService);
 
         var result = await service.ProcessOpportunityStatusChanged(
             CreateCommand(
                 opportunityId: expectedOpportunity.Id,
-                opportunityStatus: (int)OpportunityStatus.Booked),
+                opportunityStatus: (int)EOpportunityStatus.Booked),
             CancellationToken.None);
 
         Assert.Equal(expectedOpportunity, result);
         Assert.Equal(1, dataCollector.CollectCallCount);
+        Assert.Equal(1, aircallClient.GetCallsCallCount);
+        Assert.Equal("7472874522", aircallClient.CustomerPhoneNumber);
+        Assert.Equal(
+            expectedOpportunity.CreatedAt.AddDays(-1),
+            aircallClient.CallsFrom);
+        Assert.Equal(1, llmService.AnalyzeOpportunityCallCount);
+        Assert.NotNull(llmService.ProcessingData);
+        Assert.Equal(expectedOpportunity, llmService.ProcessingData.Opportunity);
+        Assert.Equal(aircallCalls, llmService.ProcessingData.AircallCalls);
+        Assert.Equal(OpportunityFactsCatalog.GetFacts(expectedOpportunity.Type), llmService.ProcessingData.FactsToExtract);
         Assert.Equal(1, processingState.MarkProcessedCallCount);
     }
 
@@ -117,13 +155,17 @@ public sealed class WebHookProcessingServiceTests
         IStatusValidationService? statusValidationService = null,
         IOpportunityStatusSnapshotService? opportunityStatusSnapshotService = null,
         IProcessingStateService? processingStateService = null,
-        IDataCollectorService? dataCollectorService = null)
+        IDataCollectorService? dataCollectorService = null,
+        IAircallClient? aircallClient = null,
+        ILlmService? llmService = null)
     {
         return new WebHookProcessingService(
             statusValidationService ?? new FakeStatusValidationService(true),
             opportunityStatusSnapshotService ?? new FakeOpportunityStatusSnapshotService(true),
             processingStateService ?? new FakeProcessingStateService(true),
-            dataCollectorService ?? new FakeDataCollectorService());
+            dataCollectorService ?? new FakeDataCollectorService(),
+            aircallClient ?? new FakeAircallClient(),
+            llmService ?? new FakeLlmService());
     }
 
     private static ProcessOpportunityStatusChangedCommand CreateCommand(
@@ -193,6 +235,85 @@ public sealed class WebHookProcessingServiceTests
             CollectCallCount++;
 
             return Task.FromResult(opportunity);
+        }
+    }
+
+    private sealed class FakeAircallClient(
+        IReadOnlyCollection<AircallCall>? calls = null) : IAircallClient
+    {
+        public int GetCallsCallCount { get; private set; }
+
+        public string? CustomerPhoneNumber { get; private set; }
+
+        public DateTimeOffset? CallsFrom { get; private set; }
+
+        public Task<DevAircallCallSearchResponse> SearchCallsForDeveloper(
+            string customerPhoneNumber,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<DevAircallCallAiSummaryResponse?> GetCallAiSummaryForDeveloper(
+            long callId,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<IReadOnlyCollection<AircallCallSearchResult>> SearchCalls(
+            string customerPhoneNumber,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<AircallCallAiSummary?> GetCallAiSummary(
+            long callId,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<IReadOnlyCollection<AircallCall>> GetCalls(
+            string customerPhoneNumber,
+            DateTimeOffset callsFrom,
+            CancellationToken cancellationToken)
+        {
+            GetCallsCallCount++;
+            CustomerPhoneNumber = customerPhoneNumber;
+            CallsFrom = callsFrom;
+
+            return Task.FromResult(calls ?? []);
+        }
+    }
+
+    private sealed class FakeLlmService : ILlmService
+    {
+        public int AnalyzeOpportunityCallCount { get; private set; }
+
+        public OpportunityProcessingData? ProcessingData { get; private set; }
+
+        public Task<OpportunityProcessingData> AnalyzeOpportunity(
+            OpportunityProcessingData processingData,
+            CancellationToken cancellationToken)
+        {
+            AnalyzeOpportunityCallCount++;
+            ProcessingData = processingData with
+            {
+                AnalysisResult = new LlmOpportunityAnalysisResult(
+                    processingData.Opportunity.Id,
+                    true,
+                    new LlmOpportunityAnalysisSummary(
+                        "match",
+                        "high",
+                        false,
+                        [],
+                        [],
+                        []))
+            };
+
+            return Task.FromResult(ProcessingData);
         }
     }
 }

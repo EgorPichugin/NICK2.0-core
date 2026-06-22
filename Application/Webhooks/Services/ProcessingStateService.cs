@@ -16,7 +16,7 @@ public sealed class ProcessingStateService(
         return repository.TryAddProcessing(
             command.EventType,
             command.OpportunityId,
-            (OpportunityStatus)command.OpportunityStatus,
+            (EOpportunityStatus)command.OpportunityStatus,
             cancellationToken);
     }
 
@@ -28,7 +28,7 @@ public sealed class ProcessingStateService(
         return repository.MarkProcessed(
             command.EventType,
             command.OpportunityId,
-            (OpportunityStatus)command.OpportunityStatus,
+            (EOpportunityStatus)command.OpportunityStatus,
             cancellationToken);
     }
 }

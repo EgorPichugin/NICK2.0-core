@@ -46,6 +46,7 @@ NICK2.0-core.http
 ~$*
 *~
 CodeCoverage/
+output/
 
 # MSBuild Binary and Structured Log
 *.binlog
