@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using NICK2._0_core.Domain;
 
 namespace NICK2._0_core.Application.Webhooks.Services;

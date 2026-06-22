@@ -20,7 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NICK2.0-core.csproj" />
+    <ProjectReference Include="..\Application\NICK2.0-core.Application.csproj" />
+    <ProjectReference Include="..\Domain\NICK2.0-core.Domain.csproj" />
+    <ProjectReference Include="..\Infrastructure\NICK2.0-core.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

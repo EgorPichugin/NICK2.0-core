@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="NICK2.0-core.csproj" />
+  <Project Path="NICK2.0-core.NickTeleBot/NICK2.0-core.NickTeleBot.csproj" />
+  <Project Path="NICK2.0-core.Tests/NICK2.0-core.Tests.csproj" />
+</Solution>

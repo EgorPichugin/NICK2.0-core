@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using NICK2._0_core.Application.Aircall;
 using NICK2._0_core.Application.Llm;
 using NICK2._0_core.Application.Processing;

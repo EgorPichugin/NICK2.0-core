@@ -2,6 +2,7 @@ using NICK2._0_core.Application.Aircall;
 using NICK2._0_core.Application.Llm;
 using NICK2._0_core.Application.Processing;
 using NICK2._0_core.Application.SmartMoving;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -98,6 +99,7 @@ public sealed class LlmService(
     {
         var paths = new[]
         {
+            Path.Combine(AppContext.BaseDirectory, "Llm", "Prompts", fileName),
             Path.Combine(AppContext.BaseDirectory, "Infrastructure", "Llm", "Prompts", fileName),
             Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Llm", "Prompts", fileName)
         };
