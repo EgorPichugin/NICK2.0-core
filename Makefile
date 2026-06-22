@@ -1,5 +1,5 @@
 DOTNET ?= $(shell if command -v dotnet >/dev/null 2>&1; then printf dotnet; elif command -v cmd.exe >/dev/null 2>&1; then printf 'cmd.exe /C dotnet'; else printf dotnet; fi)
-API_PROJECT := NICK2.0-core.csproj
+API_PROJECT := NICK2.0-core.Api/NICK2.0-core.Api.csproj
 BOT_PROJECT := NICK2.0-core.NickTeleBot/NICK2.0-core.NickTeleBot.csproj
 
 .PHONY: local-run api-run bot-run db-up db-down db-reset db-logs build test

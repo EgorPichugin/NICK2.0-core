@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Application\NICK2.0-core.Application.csproj" />
+    <ProjectReference Include="..\NICK2.0-core.Application\NICK2.0-core.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

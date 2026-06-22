@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Domain\NICK2.0-core.Domain.csproj" />
+    <ProjectReference Include="..\NICK2.0-core.Domain\NICK2.0-core.Domain.csproj" />
   </ItemGroup>
 
 </Project>

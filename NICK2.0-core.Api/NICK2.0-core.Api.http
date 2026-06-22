@@ -1,0 +1,27 @@
+@HostAddress = https://nick20-core-production.up.railway.app
+@WebhookToken = nick2-test-8f4c1d6a9b2e4f0a
+@OpportunityId = 3e48d43e-18a5-4d10-b7f3-b4390145fe28
+
+### Opportunity
+POST {{HostAddress}}/api/smartmoving/webhook/opportunity-status-changed
+Accept: application/json
+Content-Type: application/json
+X-SmartMoving-Webhook-Token: {{WebhookToken}}
+
+{
+  "event-type": "opportunity-status-changed",
+  "opportunity-id": "{{OpportunityId}}",
+  "opportunity-status": 3
+}
+
+### Booked
+POST {{HostAddress}}/api/smartmoving/webhook/opportunity-status-changed
+Accept: application/json
+Content-Type: application/json
+X-SmartMoving-Webhook-Token: {{WebhookToken}}
+
+{
+  "event-type": "opportunity-status-changed",
+  "opportunity-id": "{{OpportunityId}}",
+  "opportunity-status": 4
+}

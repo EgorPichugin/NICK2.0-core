@@ -14,16 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Application\**\*.cs" />
-    <Compile Remove="Domain\**\*.cs" />
-    <Compile Remove="Infrastructure\**\*.cs" />
-    <Compile Remove="NICK2.0-core.NickTeleBot\**\*.cs" />
-    <Compile Remove="NICK2.0-core.Tests\**\*.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="Application\NICK2.0-core.Application.csproj" />
-    <ProjectReference Include="Infrastructure\NICK2.0-core.Infrastructure.csproj" />
+    <ProjectReference Include="..\NICK2.0-core.Application\NICK2.0-core.Application.csproj" />
+    <ProjectReference Include="..\NICK2.0-core.Infrastructure\NICK2.0-core.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
