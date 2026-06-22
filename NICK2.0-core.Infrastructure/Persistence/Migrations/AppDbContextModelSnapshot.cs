@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NICK2._0_core.Infrastructure.Persistence.Migrations
+namespace NICK2._0_core.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot
@@ -73,6 +73,30 @@ namespace NICK2._0_core.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("processing_states", (string)null);
+                });
+
+            modelBuilder.Entity("NICK2._0_core.Domain.TelegramOutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("telegram_outbox_messages", (string)null);
                 });
 #pragma warning restore 612, 618
         }

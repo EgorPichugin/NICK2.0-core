@@ -11,6 +11,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<ProcessingStateRecord> ProcessingStates =>
         Set<ProcessingStateRecord>();
 
+    public DbSet<TelegramOutboxMessage> TelegramOutboxMessages =>
+        Set<TelegramOutboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OpportunityStatusSnapshot>(entity =>
@@ -45,6 +48,19 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
                 .HasConversion<int>();
 
             entity.Property(processingState => processingState.State)
+                .HasConversion<int>();
+        });
+
+        modelBuilder.Entity<TelegramOutboxMessage>(entity =>
+        {
+            entity.ToTable("telegram_outbox_messages");
+            entity.HasKey(message => message.Id);
+
+            entity.Property(message => message.PayloadJson)
+                .HasColumnType("jsonb")
+                .IsRequired();
+
+            entity.Property(message => message.Status)
                 .HasConversion<int>();
         });
     }

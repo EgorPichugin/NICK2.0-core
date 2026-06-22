@@ -122,13 +122,15 @@ public sealed class WebHookProcessingServiceTests
         var dataCollector = new FakeDataCollectorService(expectedOpportunity);
         var aircallClient = new FakeAircallClient(aircallCalls);
         var llmService = new FakeLlmService();
+        var processingDataOutbox = new FakeProcessingDataOutboxRepository();
         var processingState = new FakeProcessingStateService(true);
         var service = CreateService(
             opportunityStatusSnapshotService: new FakeOpportunityStatusSnapshotService(true),
             processingStateService: processingState,
             dataCollectorService: dataCollector,
             aircallClient: aircallClient,
-            llmService: llmService);
+            llmService: llmService,
+            processingDataOutboxRepository: processingDataOutbox);
 
         var result = await service.ProcessOpportunityStatusChanged(
             CreateCommand(
@@ -148,6 +150,8 @@ public sealed class WebHookProcessingServiceTests
         Assert.Equal(expectedOpportunity, llmService.ProcessingData.Opportunity);
         Assert.Equal(aircallCalls, llmService.ProcessingData.AircallCalls);
         Assert.Equal(OpportunityFactsCatalog.GetFacts(expectedOpportunity.Type), llmService.ProcessingData.FactsToExtract);
+        Assert.Equal(1, processingDataOutbox.AddProcessingDataCallCount);
+        Assert.Equal(llmService.ProcessingData, processingDataOutbox.ProcessingData);
         Assert.Equal(1, processingState.MarkProcessedCallCount);
     }
 
@@ -157,7 +161,8 @@ public sealed class WebHookProcessingServiceTests
         IProcessingStateService? processingStateService = null,
         IDataCollectorService? dataCollectorService = null,
         IAircallClient? aircallClient = null,
-        ILlmService? llmService = null)
+        ILlmService? llmService = null,
+        IProcessingDataOutboxRepository? processingDataOutboxRepository = null)
     {
         return new WebHookProcessingService(
             statusValidationService ?? new FakeStatusValidationService(true),
@@ -165,7 +170,8 @@ public sealed class WebHookProcessingServiceTests
             processingStateService ?? new FakeProcessingStateService(true),
             dataCollectorService ?? new FakeDataCollectorService(),
             aircallClient ?? new FakeAircallClient(),
-            llmService ?? new FakeLlmService());
+            llmService ?? new FakeLlmService(),
+            processingDataOutboxRepository);
     }
 
     private static ProcessOpportunityStatusChangedCommand CreateCommand(
@@ -314,6 +320,23 @@ public sealed class WebHookProcessingServiceTests
             };
 
             return Task.FromResult(ProcessingData);
+        }
+    }
+
+    private sealed class FakeProcessingDataOutboxRepository : IProcessingDataOutboxRepository
+    {
+        public int AddProcessingDataCallCount { get; private set; }
+
+        public OpportunityProcessingData? ProcessingData { get; private set; }
+
+        public Task AddProcessingData(
+            OpportunityProcessingData processingData,
+            CancellationToken cancellationToken)
+        {
+            AddProcessingDataCallCount++;
+            ProcessingData = processingData;
+
+            return Task.CompletedTask;
         }
     }
 }

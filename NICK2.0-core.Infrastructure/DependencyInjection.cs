@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using NICK2._0_core.Application.Aircall;
 using NICK2._0_core.Application.Llm;
+using NICK2._0_core.Application.Processing;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks.Repositories;
 using NICK2._0_core.Infrastructure.Aircall;
@@ -37,6 +38,7 @@ public static class DependencyInjection
         services.AddHostedService<DatabaseInitializer>();
         services.AddScoped<IOpportunityStatusSnapshotRepository, OpportunityStatusSnapshotRepository>();
         services.AddScoped<IProcessingStateRepository, ProcessingStateRepository>();
+        services.AddScoped<IProcessingDataOutboxRepository, ProcessingDataOutboxRepository>();
         services.AddSingleton<ILlmCompletionClient, OpenAiChatCompletionClient>();
         services.AddScoped<ILlmService, LlmService>();
 

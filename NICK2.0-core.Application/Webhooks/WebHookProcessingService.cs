@@ -17,6 +17,7 @@ public sealed class WebHookProcessingService(
     IDataCollectorService dataCollectorService,
     IAircallClient aircallClient,
     ILlmService llmService,
+    IProcessingDataOutboxRepository? processingDataOutboxRepository = null,
     ILogger<WebHookProcessingService>? logger = null) : IWebHookProcessingService
 {
     /// <summary>
@@ -123,6 +124,11 @@ public sealed class WebHookProcessingService(
             "Received LLM analysis for SmartMoving opportunity {OpportunityId}. IsMocked: {IsMocked}.",
             processingData.AnalysisResult?.OpportunityId,
             processingData.AnalysisResult?.IsMocked);
+
+        if (processingDataOutboxRepository is not null)
+        {
+            await processingDataOutboxRepository.AddProcessingData(processingData, cancellationToken);
+        }
 
         var opportunitySnapshotPath = await SaveOpportunitySnapshot(processingData, cancellationToken);
         await processingStateService.MarkProcessed(command, cancellationToken);
