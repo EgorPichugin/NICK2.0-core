@@ -1,10 +1,10 @@
-using NICK2._0_core.Application.SmartMoving;
+using NICK2._0_core.Application.Processing;
 
 namespace NICK2._0_core.Application.Llm;
 
 public interface ILlmService
 {
-    Task<LlmOpportunityAnalysisResult> AnalyzeOpportunity(
-        SmartMovingOpportunity opportunity,
+    Task<OpportunityProcessingData> AnalyzeOpportunity(
+        OpportunityProcessingData processingData,
         CancellationToken cancellationToken);
 }

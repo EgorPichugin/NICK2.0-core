@@ -1,6 +1,7 @@
 using NICK2._0_core.Application.Aircall;
 using NICK2._0_core.Application.Developer;
 using NICK2._0_core.Application.Llm;
+using NICK2._0_core.Application.Processing;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks;
 using NICK2._0_core.Application.Webhooks.Commands;
@@ -106,7 +107,6 @@ public sealed class WebHookProcessingServiceTests
             DateTimeOffset.Parse("2026-06-18T00:00:00Z"),
             null,
             null,
-            [],
             []);
         var aircallCalls = new[]
         {
@@ -136,7 +136,7 @@ public sealed class WebHookProcessingServiceTests
                 opportunityStatus: (int)EOpportunityStatus.Booked),
             CancellationToken.None);
 
-        Assert.Equal(expectedOpportunity with { Summaries = aircallCalls }, result);
+        Assert.Equal(expectedOpportunity, result);
         Assert.Equal(1, dataCollector.CollectCallCount);
         Assert.Equal(1, aircallClient.GetCallsCallCount);
         Assert.Equal("7472874522", aircallClient.CustomerPhoneNumber);
@@ -144,7 +144,10 @@ public sealed class WebHookProcessingServiceTests
             expectedOpportunity.CreatedAt.AddDays(-1),
             aircallClient.CallsFrom);
         Assert.Equal(1, llmService.AnalyzeOpportunityCallCount);
-        Assert.Equal(expectedOpportunity with { Summaries = aircallCalls }, llmService.Opportunity);
+        Assert.NotNull(llmService.ProcessingData);
+        Assert.Equal(expectedOpportunity, llmService.ProcessingData.Opportunity);
+        Assert.Equal(aircallCalls, llmService.ProcessingData.AircallCalls);
+        Assert.Equal(OpportunityFactsCatalog.GetFacts(expectedOpportunity.Type), llmService.ProcessingData.FactsToExtract);
         Assert.Equal(1, processingState.MarkProcessedCallCount);
     }
 
@@ -289,19 +292,28 @@ public sealed class WebHookProcessingServiceTests
     {
         public int AnalyzeOpportunityCallCount { get; private set; }
 
-        public SmartMovingOpportunity? Opportunity { get; private set; }
+        public OpportunityProcessingData? ProcessingData { get; private set; }
 
-        public Task<LlmOpportunityAnalysisResult> AnalyzeOpportunity(
-            SmartMovingOpportunity opportunity,
+        public Task<OpportunityProcessingData> AnalyzeOpportunity(
+            OpportunityProcessingData processingData,
             CancellationToken cancellationToken)
         {
             AnalyzeOpportunityCallCount++;
-            Opportunity = opportunity;
+            ProcessingData = processingData with
+            {
+                AnalysisResult = new LlmOpportunityAnalysisResult(
+                    processingData.Opportunity.Id,
+                    true,
+                    new LlmOpportunityAnalysisSummary(
+                        "match",
+                        "high",
+                        false,
+                        [],
+                        [],
+                        []))
+            };
 
-            return Task.FromResult(new LlmOpportunityAnalysisResult(
-                opportunity.Id,
-                true,
-                "Mocked analysis."));
+            return Task.FromResult(ProcessingData);
         }
     }
 }

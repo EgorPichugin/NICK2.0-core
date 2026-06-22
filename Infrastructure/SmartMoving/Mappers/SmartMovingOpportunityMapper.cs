@@ -28,8 +28,7 @@ public static class SmartMovingOpportunityMapper
                     ToDateOnly(job.JobDate),
                     job.ArrivalWindow.Description,
                     jobDetailsById.GetValueOrDefault(job.Id)?.Notes?.CrewNotes))
-                .ToArray(),
-            []);
+                .ToArray());
     }
 
     private static DateOnly? ToDateOnly(int date)

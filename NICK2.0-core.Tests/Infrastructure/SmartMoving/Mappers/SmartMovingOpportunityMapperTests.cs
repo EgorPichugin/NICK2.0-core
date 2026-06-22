@@ -91,7 +91,6 @@ public sealed class SmartMovingOpportunityMapperTests
         Assert.Equal(DateTimeOffset.Parse("2026-04-27T19:46:54.2085361+00:00"), result.CreatedAt);
         Assert.Null(result.BookedAt);
         Assert.Null(result.StatusChangedAt);
-        Assert.Empty(result.Summaries);
         var job = Assert.Single(result.Jobs);
         Assert.Equal(jobId, job.Id);
         Assert.Equal("JOB-1", job.JobNumber);

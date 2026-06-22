@@ -25,6 +25,8 @@ public static class DependencyInjection
             configuration.GetSection(SmartMovingOptions.SectionName));
         services.Configure<AircallOptions>(
             configuration.GetSection(AircallOptions.SectionName));
+        services.Configure<LlmOptions>(
+            configuration.GetSection(LlmOptions.SectionName));
         services.Configure<PostgreSqlOptions>(
             configuration.GetSection(PostgreSqlOptions.SectionName));
 
@@ -33,6 +35,7 @@ public static class DependencyInjection
         services.AddHostedService<DatabaseInitializer>();
         services.AddScoped<IOpportunityStatusSnapshotRepository, OpportunityStatusSnapshotRepository>();
         services.AddScoped<IProcessingStateRepository, ProcessingStateRepository>();
+        services.AddSingleton<ILlmCompletionClient, OpenAiChatCompletionClient>();
         services.AddScoped<ILlmService, LlmService>();
 
         services.AddHttpClient<ISmartMovingClient, SmartMovingClient>((serviceProvider, httpClient) =>

@@ -1,11 +1,10 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using NICK2._0_core.Application.Aircall;
 using NICK2._0_core.Application.Llm;
+using NICK2._0_core.Application.Processing;
 using NICK2._0_core.Application.SmartMoving;
 using NICK2._0_core.Application.Webhooks.Commands;
 using NICK2._0_core.Application.Webhooks.Services;
-using NICK2._0_core.Domain;
 
 namespace NICK2._0_core.Application.Webhooks;
 
@@ -109,22 +108,22 @@ public sealed class WebHookProcessingService(
             return null;
         }
 
-        var summaries = await aircallClient.GetCalls(
+        var aircallCalls = await aircallClient.GetCalls(
             opportunity.CustomerPhoneNumber,
             opportunity.CreatedAt.AddDays(-1),
             cancellationToken);
-        opportunity = opportunity with
-        {
-            Summaries = summaries
-        };
+        var processingData = new OpportunityProcessingData(
+            opportunity,
+            aircallCalls,
+            OpportunityFactsCatalog.GetFacts(opportunity.Type));
 
-        var analysis = await llmService.AnalyzeOpportunity(opportunity, cancellationToken);
+        processingData = await llmService.AnalyzeOpportunity(processingData, cancellationToken);
         logger?.LogInformation(
             "Received LLM analysis for SmartMoving opportunity {OpportunityId}. IsMocked: {IsMocked}.",
-            analysis.OpportunityId,
-            analysis.IsMocked);
+            processingData.AnalysisResult?.OpportunityId,
+            processingData.AnalysisResult?.IsMocked);
 
-        var opportunitySnapshotPath = await SaveOpportunitySnapshot(opportunity, cancellationToken);
+        var opportunitySnapshotPath = await SaveOpportunitySnapshot(processingData, cancellationToken);
         await processingStateService.MarkProcessed(command, cancellationToken);
 
         logger?.LogInformation(
@@ -146,9 +145,10 @@ public sealed class WebHookProcessingService(
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The full path to the created snapshot file.</returns>
     private static async Task<string> SaveOpportunitySnapshot(
-        SmartMovingOpportunity opportunity,
+        OpportunityProcessingData processingData,
         CancellationToken cancellationToken)
     {
+        var opportunity = processingData.Opportunity;
         var outputDirectory = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDirectory);
 
@@ -159,105 +159,14 @@ public sealed class WebHookProcessingService(
         await using var stream = File.Create(outputPath);
         await JsonSerializer.SerializeAsync(
             stream,
-            CollectedOpportunitySnapshot.From(opportunity),
+            processingData,
             new JsonSerializerOptions
             {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 WriteIndented = true
             },
             cancellationToken);
 
         return outputPath;
     }
-
-    private sealed record CollectedOpportunitySnapshot(
-        [property: JsonPropertyName("Opportunity")]
-        OpportunitySnapshot Opportunity,
-        [property: JsonPropertyName("Jobs")]
-        IReadOnlyCollection<JobSnapshot> Jobs,
-        [property: JsonPropertyName("Aircall")]
-        AircallSnapshot Aircall)
-    {
-        public static CollectedOpportunitySnapshot From(SmartMovingOpportunity opportunity)
-        {
-            return new CollectedOpportunitySnapshot(
-                new OpportunitySnapshot(
-                    opportunity.Id,
-                    opportunity.QuoteNumber,
-                    opportunity.CustomerPhoneNumber,
-                    new OpportunityTypeSnapshot(
-                        (int)opportunity.Type,
-                        GetOpportunityTypeName(opportunity.Type)),
-                    new OpportunityStatusSnapshot(
-                        opportunity.Status,
-                        GetOpportunityStatusName(opportunity.Status)),
-                    opportunity.CreatedAt,
-                    opportunity.BookedAt,
-                    opportunity.StatusChangedAt),
-                opportunity.Jobs
-                    .Select(job => new JobSnapshot(
-                        job.Id,
-                        job.JobNumber,
-                        job.MoveDate,
-                        job.ArrivalWindow,
-                        job.CrewNotes))
-                    .ToArray(),
-                new AircallSnapshot(opportunity.Summaries));
-        }
-
-        private static string GetOpportunityStatusName(int status)
-        {
-            return Enum.GetName(typeof(EOpportunityStatus), status) ?? status.ToString();
-        }
-
-        private static string GetOpportunityTypeName(EType type)
-        {
-            return Enum.GetName(typeof(EType), type) ?? ((int)type).ToString();
-        }
-    }
-
-    private sealed record OpportunitySnapshot(
-        [property: JsonPropertyName("id")]
-        Guid Id,
-        [property: JsonPropertyName("quoteNumber")]
-        int QuoteNumber,
-        [property: JsonPropertyName("customerPhoneNumber")]
-        string CustomerPhoneNumber,
-        [property: JsonPropertyName("type")]
-        OpportunityTypeSnapshot Type,
-        [property: JsonPropertyName("status")]
-        OpportunityStatusSnapshot Status,
-        [property: JsonPropertyName("createdAt")]
-        DateTimeOffset CreatedAt,
-        [property: JsonPropertyName("bookedAt")]
-        DateTimeOffset? BookedAt,
-        [property: JsonPropertyName("statusChangedAt")]
-        DateTimeOffset? StatusChangedAt);
-
-    private sealed record OpportunityStatusSnapshot(
-        [property: JsonPropertyName("code")]
-        int Code,
-        [property: JsonPropertyName("name")]
-        string Name);
-
-    private sealed record OpportunityTypeSnapshot(
-        [property: JsonPropertyName("code")]
-        int Code,
-        [property: JsonPropertyName("name")]
-        string Name);
-
-    private sealed record JobSnapshot(
-        [property: JsonPropertyName("id")]
-        Guid Id,
-        [property: JsonPropertyName("jobNumber")]
-        string JobNumber,
-        [property: JsonPropertyName("moveDate")]
-        DateOnly? MoveDate,
-        [property: JsonPropertyName("arrivalWindow")]
-        string? ArrivalWindow,
-        [property: JsonPropertyName("crewNotes")]
-        string? CrewNotes);
-
-    private sealed record AircallSnapshot(
-        [property: JsonPropertyName("calls")]
-        IReadOnlyCollection<AircallCall> Calls);
 }
