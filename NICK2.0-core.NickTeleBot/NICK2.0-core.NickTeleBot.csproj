@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-NICK2._0_core.NickTeleBot-aff7eb80-9294-4e0f-9b52-54fd5eb62bb0</UserSecretsId>
+    <RootNamespace>NICK2._0_core.NickTeleBot</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
+    <PackageReference Include="Telegram.Bot" Version="22.10.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NICK2.0-core.Application\NICK2.0-core.Application.csproj" />
+    <ProjectReference Include="..\NICK2.0-core.Infrastructure\NICK2.0-core.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>
